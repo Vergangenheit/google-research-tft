@@ -62,57 +62,60 @@ def download_electricity(config: ExperimentConfig) -> str:
 
 
 def preprocess_electricty(csv_path: str, config: ExperimentConfig):
-    print('Aggregating to hourly data')
+    if os.path.exists(config.data_csv_path):
+        print(f'File already preprocessed in {config.data_csv_path}')
+    else:
+        print('Aggregating to hourly data')
 
-    df = pd.read_csv(csv_path, index_col=0, sep=';', decimal=',')
-    df.index = pd.to_datetime(df.index)
-    df.sort_index(inplace=True)
+        df: DataFrame = pd.read_csv(csv_path, index_col=0, sep=';', decimal=',')
+        df.index = pd.to_datetime(df.index)
+        df.sort_index(inplace=True)
 
-    # Used to determine the start and end dates of a series
-    output = df.resample('1h').mean().replace(0., np.nan)
+        # Used to determine the start and end dates of a series
+        output = df.resample('1h').mean().replace(0., np.nan)
 
-    earliest_time = output.index.min()
+        earliest_time: Timestamp = output.index.min()
 
-    df_list = []
-    for label in output:
-        print('Processing {}'.format(label))
-        srs: Series = output[label]
+        df_list = []
+        for label in output:
+            print('Processing {}'.format(label))
+            srs: Series = output[label]
 
-        start_date: Timestamp = min(srs.fillna(method='ffill').dropna().index)
-        end_date: Timestamp = max(srs.fillna(method='bfill').dropna().index)
+            start_date: Timestamp = min(srs.fillna(method='ffill').dropna().index)
+            end_date: Timestamp = max(srs.fillna(method='bfill').dropna().index)
 
-        active_range: ndarray = (srs.index >= start_date) & (srs.index <= end_date)
-        srs: Series = srs[active_range].fillna(0.)
+            active_range: ndarray = (srs.index >= start_date) & (srs.index <= end_date)
+            srs: Series = srs[active_range].fillna(0.)
 
-        tmp: DataFrame = pd.DataFrame({'power_usage': srs})
-        date: Index = tmp.index
-        tmp['t']: Series = (date - earliest_time).seconds / 60 / 60 + (
-                date - earliest_time).days * 24
-        tmp['days_from_start']: Series = (date - earliest_time).days
-        tmp['categorical_id']: Series = label
-        tmp['date']: Series = date
-        tmp['id']: Series = label
-        tmp['hour']: Series = date.hour
-        tmp['day']: Series = date.day
-        tmp['day_of_week']: Series = date.dayofweek
-        tmp['month']: Series = date.month
+            tmp: DataFrame = pd.DataFrame({'power_usage': srs})
+            date: Series = tmp.index
+            tmp['t']: Series = (date - earliest_time).seconds / 60 / 60 + (
+                    date - earliest_time).days * 24
+            tmp['days_from_start']: Series = (date - earliest_time).days
+            tmp['categorical_id']: Series = label
+            tmp['date']: Series = date
+            tmp['id']: Series = label
+            tmp['hour']: Series = date.hour
+            tmp['day']: Series = date.day
+            tmp['day_of_week']: Series = date.dayofweek
+            tmp['month']: Series = date.month
 
-        df_list.append(tmp)
+            df_list.append(tmp)
 
-    output: DataFrame = pd.concat(df_list, axis=0, join='outer').reset_index(drop=True)
+        output: DataFrame = pd.concat(df_list, axis=0, join='outer').reset_index(drop=True)
 
-    output['categorical_id']: Series = output['id'].copy()
-    output['hours_from_start']: Series = output['t']
-    output['categorical_day_of_week']: Series = output['day_of_week'].copy()
-    output['categorical_hour']: Series = output['hour'].copy()
+        output['categorical_id']: Series = output['id'].copy()
+        output['hours_from_start']: Series = output['t']
+        output['categorical_day_of_week']: Series = output['day_of_week'].copy()
+        output['categorical_hour']: Series = output['hour'].copy()
 
-    # Filter to match range used by other academic papers
-    output: DataFrame = output[(output['days_from_start'] >= 1096)
-                               & (output['days_from_start'] < 1346)].copy()
+        # Filter to match range used by other academic papers
+        output: DataFrame = output[(output['days_from_start'] >= 1096)
+                                   & (output['days_from_start'] < 1346)].copy()
 
-    output.to_csv(config.data_csv_path)
-    print(f'Saved in {config.data_csv_path}')
-    print('Done.')
+        output.to_csv(config.data_csv_path)
+        print(f'Saved in {config.data_csv_path}')
+        print('Done.')
 
 
 if __name__ == "__main__":
