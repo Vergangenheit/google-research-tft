@@ -8,16 +8,18 @@ import json
 import os
 import shutil
 from typing import Union, Tuple, List, Dict, Optional
-
+import math
 from data_formatters.base import InputTypes
 import libs.utils as utils
 import numpy as np
+from numpy import save, load
 import pandas as pd
 from pandas import Series, DataFrame
 from numpy import ndarray
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, TimeDistributed, Input, LSTM
 from tensorflow import Tensor
+from tensorflow.python.data import Dataset
 
 # Layer definitions.
 concat = tf.keras.backend.concatenate
@@ -658,7 +660,7 @@ class TemporalFusionTransformer(object):
 
         return sampled_data
 
-    def _batch_data(self, data):
+    def _batch_data(self, data: DataFrame) -> Dict:
         """Batches data for training.
     Converts raw dataframe from a 2-D tabular format to a batched 3-D array
     to feed into Keras model.
@@ -669,7 +671,7 @@ class TemporalFusionTransformer(object):
     """
 
         # Functions.
-        def _batch_single_entity(input_data) -> Optional[ndarray]:
+        def _batch_single_entity(input_data: Series) -> Optional[ndarray]:
             time_steps = len(input_data)
             lags = self.time_steps
             x = input_data.values
@@ -715,7 +717,7 @@ class TemporalFusionTransformer(object):
         # Shorten target so we only get decoder steps
         data_map['outputs'] = data_map['outputs'][:, self.num_encoder_steps:, :]
 
-        active_entries = np.ones_like(data_map['outputs'])
+        active_entries: ndarray = np.ones_like(data_map['outputs'])
         if 'active_entries' not in data_map:
             data_map['active_entries'] = active_entries
         else:
@@ -914,7 +916,7 @@ class TemporalFusionTransformer(object):
         future_lstm = get_lstm(return_state=False)(
             future_features, initial_state=[state_h, state_c])
 
-        lstm_layer = concat([history_lstm, future_lstm], axis=1)
+        lstm_layer: Tensor = concat([history_lstm, future_lstm], axis=1)
 
         # Apply gated skip connection
         input_embeddings = concat([historical_features, future_features], axis=1)
@@ -1050,7 +1052,7 @@ class TemporalFusionTransformer(object):
         print('*** Fitting {} ***'.format(self.name))
 
         # Add relevant callbacks
-        callbacks = [
+        callbacks: List = [
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
                 patience=self.early_stopping_patience,
@@ -1066,44 +1068,86 @@ class TemporalFusionTransformer(object):
         print('Getting batched_data')
         if train_df is None:
             print('Using cached training data')
-            train_data = TFTDataCache.get('train')
+            train_data: Dict = TFTDataCache.get('train')
         else:
-            train_data = self._batch_data(train_df)
+            train_data: Dict = self._batch_data(train_df)
 
         if valid_df is None:
             print('Using cached validation data')
-            valid_data = TFTDataCache.get('valid')
+            valid_data: Dict = TFTDataCache.get('valid')
         else:
-            valid_data = self._batch_data(valid_df)
+            valid_data: Dict = self._batch_data(valid_df)
 
         print('Using keras standard fit')
 
-        def _unpack(data):
+        def _unpack(data: Dict):
             return data['inputs'], data['outputs'], \
                    self._get_active_locations(data['active_entries'])
 
         # Unpack without sample weights
         data, labels, active_flags = _unpack(train_data)
         val_data, val_labels, val_flags = _unpack(valid_data)
+        # save arrays
+        folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
+        save(os.path.join(folder, 'data.npz'), data)
+        save(os.path.join(folder, 'labels.npz'), labels)
+        save(os.path.join(folder, 'active_flags.npz'), active_flags)
+        train_size = data.shape[0]
+        valid_size = val_data.shape[0]
+        # release memory from large arrays
+        data = None
+        labels = None
+        active_flags = None
+
+        # define train data generator
+        def traindata_gen():
+            data = load(os.path.join(folder, 'data.npz'))
+            labels = load(os.path.join(folder, 'labels.npz'))
+            active_flags = load(os.path.join(folder, 'active_flags.npz'))
+            for i in range(train_size // self.minibatch_size + 1):
+                upper = min((i + 1) * self.minibatch_size, train_size)
+
+                yield data[i * self.minibatch_size:upper], labels[i * self.minibatch_size:upper], active_flags[i * self.minibatch_size:upper]
+
+        # wrap into tf.data.Dataset
+        print("Wrapping into tensorflow Datasets")
+        training_dataset: Dataset = tf.data.Dataset.from_generator(traindata_gen)
+        training_dataset: Dataset = training_dataset.batch(self.minibatch_size)
+        valid_dataset: Dataset = (
+            tf.data.Dataset.from_tensor_slices(
+                (
+                    val_data,
+                    np.concatenate([val_labels, val_labels, val_labels],
+                                   axis=-1),
+                    val_flags,
+                )
+            )
+        )
+        valid_dataset: Dataset = valid_dataset.batch(self.minibatch_size)
+        training_dataset: Dataset = training_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        valid_dataset: Dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        # release memory from large arrays
+        val_data = None
+        val_labels = None
+        val_flags = None
 
         all_callbacks = callbacks
 
         self.model.fit(
-            x=data,
-            y=np.concatenate([labels, labels, labels], axis=-1),
-            sample_weight=active_flags,
+            training_dataset,
+            # sample_weight=active_flags,
+            steps_per_epoch=math.ceil(train_size / self.minibatch_size),
             epochs=self.num_epochs,
-            batch_size=self.minibatch_size,
-            validation_data=(val_data,
-                             np.concatenate([val_labels, val_labels, val_labels],
-                                            axis=-1), val_flags),
+            # batch_size=self.minibatch_size,
+            validation_data=valid_dataset,
+            validation_steps=math.ceil(valid_size / self.minibatch_size),
             callbacks=all_callbacks,
-            shuffle=True,
+            # shuffle=True,
             use_multiprocessing=True,
             workers=self.n_multiprocessing_workers)
 
         # Load best checkpoint again
-        tmp_checkpont = self.get_keras_saved_path(self._temp_folder)
+        tmp_checkpont: str = self.get_keras_saved_path(self._temp_folder)
         if os.path.exists(tmp_checkpont):
             self.load(
                 self._temp_folder,
@@ -1112,7 +1156,7 @@ class TemporalFusionTransformer(object):
         else:
             print('Cannot load from {}, skipping ...'.format(self._temp_folder))
 
-    def evaluate(self, data: DataFrame =None, eval_metric='loss') -> Series:
+    def evaluate(self, data: DataFrame = None, eval_metric='loss') -> Series:
         """Applies evaluation metric to the training data.
         Args:
           data: Dataframe for evaluation
@@ -1198,7 +1242,7 @@ class TemporalFusionTransformer(object):
 
         return {k: format_outputs(process_map[k]) for k in process_map}
 
-    def get_attention(self, df):
+    def get_attention(self, df: DataFrame):
         """Computes TFT attention weights for a given dataset.
     Args:
       df: Input dataframe

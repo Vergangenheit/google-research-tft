@@ -139,9 +139,9 @@ class HyperparamOptManager:
 
     def get_next_parameters(self, ranges_to_skip=None) -> Dict:
         """Returns the next set of parameters to optimise.
-    Args:
-      ranges_to_skip: Explicitly defines a set of keys to skip.
-    """
+        Args:
+          ranges_to_skip: Explicitly defines a set of keys to skip.
+        """
         if ranges_to_skip is None:
             ranges_to_skip = set(self.results.index)
 
