@@ -83,7 +83,7 @@ class GenericDataFormatter(abc.ABC):
     """
         return self._num_classes_per_cat_input
 
-    def get_num_samples_for_calibration(self) -> Tuple:
+    def get_num_samples_for_calibration(self) -> (int, int):
         """Gets the default number of training and validation samples.
     Use to sub-sample the data for network calibration and a value of -1 uses
     all available samples.

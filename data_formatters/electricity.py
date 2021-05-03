@@ -1,7 +1,7 @@
 from data_formatters.base import GenericDataFormatter, DataTypes, InputTypes
 import pandas as pd
 import sklearn.preprocessing as pp
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from pandas import DataFrame
 from libs import utils
 
@@ -36,7 +36,7 @@ class ElectricityFormatter(GenericDataFormatter):
         self._num_classes_per_cat_input = None
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
-    def split_data(self, df: DataFrame, valid_boundary=1315, test_boundary=1339) -> Tuple:
+    def split_data(self, df: DataFrame, valid_boundary=1315, test_boundary=1339) -> (DataFrame, DataFrame, DataFrame):
         """Splits data frame into training-validation-test data frames.
     This also calibrates scaling object, and transforms data for each split.
     Args:
@@ -50,9 +50,9 @@ class ElectricityFormatter(GenericDataFormatter):
         print('Formatting train-valid-test splits.')
 
         index = df['days_from_start']
-        train = df.loc[index < valid_boundary]
-        valid = df.loc[(index >= valid_boundary - 7) & (index < test_boundary)]
-        test = df.loc[index >= test_boundary - 7]
+        train: DataFrame = df.loc[index < valid_boundary]
+        valid: DataFrame = df.loc[(index >= valid_boundary - 7) & (index < test_boundary)]
+        test: DataFrame = df.loc[index >= test_boundary - 7]
 
         self.set_scalers(train)
 
@@ -126,13 +126,13 @@ class ElectricityFormatter(GenericDataFormatter):
             raise ValueError('Scalers have not been set!')
 
         # Extract relevant columns
-        column_definitions = self.get_column_definition()
-        id_col = utils.get_single_col_by_input_type(InputTypes.ID,
+        column_definitions: List = self.get_column_definition()
+        id_col: str = utils.get_single_col_by_input_type(InputTypes.ID,
                                                     column_definitions)
-        real_inputs = utils.extract_cols_from_data_type(
+        real_inputs: List = utils.extract_cols_from_data_type(
             DataTypes.REAL_VALUED, column_definitions,
             {InputTypes.ID, InputTypes.TIME})
-        categorical_inputs = utils.extract_cols_from_data_type(
+        categorical_inputs: List = utils.extract_cols_from_data_type(
             DataTypes.CATEGORICAL, column_definitions,
             {InputTypes.ID, InputTypes.TIME})
 
@@ -147,7 +147,7 @@ class ElectricityFormatter(GenericDataFormatter):
                     sliced_copy[real_inputs].values)
                 df_list.append(sliced_copy)
 
-        output = pd.concat(df_list, axis=0)
+        output: DataFrame = pd.concat(df_list, axis=0)
 
         # Format categorical inputs
         for col in categorical_inputs:
@@ -212,7 +212,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
         return model_params
 
-    def get_num_samples_for_calibration(self) -> Tuple:
+    def get_num_samples_for_calibration(self) -> (int, int):
         """Gets the default number of training and validation samples.
     Use to sub-sample the data for network calibration and a value of -1 uses
     all available samples.
