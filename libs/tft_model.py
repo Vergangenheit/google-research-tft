@@ -15,7 +15,7 @@ import numpy as np
 from numpy import save, load
 import pandas as pd
 from pandas import Series, DataFrame
-from numpy import ndarray
+from numpy import ndarray, memmap
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, TimeDistributed, Input, LSTM
 from tensorflow import Tensor
@@ -397,6 +397,7 @@ class TemporalFusionTransformer(object):
         self.output_size = int(params['output_size'])
         self.category_counts = json.loads(str(params['category_counts']))
         self.n_multiprocessing_workers = int(params['multiprocessing_workers'])
+        self.data_folder: str = params['data_folder']
 
         # Relevant indices for TFT
         self._input_obs_loc = json.loads(str(params['input_obs_loc']))
@@ -1070,50 +1071,49 @@ class TemporalFusionTransformer(object):
                    self._get_active_locations(data['active_entries'])
 
         # check if data are already generated
-        folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
 
-        if os.path.exists(os.path.join(folder, 'data.npy')) is False:
-            print('Getting batched_data')
-            if train_df is None:
-                print('Using cached training data')
-                train_data: Dict = TFTDataCache.get('train')
-            else:
-                train_data: Dict = self._batch_data(train_df)
-
-            if valid_df is None:
-                print('Using cached validation data')
-                valid_data: Dict = TFTDataCache.get('valid')
-            else:
-                valid_data: Dict = self._batch_data(valid_df)
-
-            print('Using keras standard fit')
-
-            # def _unpack(data: Dict) -> (ndarray, ndarray, ndarray):
-            #     return data['inputs'], data['outputs'], \
-            #            self._get_active_locations(data['active_entries'])
-
-            # Unpack without sample weights
-            data, labels, active_flags = _unpack(train_data)
-            # val_data, val_labels, val_flags = _unpack(valid_data)
-            # save arrays
-            # folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
-            save(os.path.join(folder, 'data.npy'), data)
-            save(os.path.join(folder, 'labels.npy'), labels)
-            save(os.path.join(folder, 'active_flags.npy'), active_flags)
-            # data_size: Tuple = data.shape
-            label_size: Tuple = labels.shape
-            flag_size: Tuple = active_flags.shape
-            # valid_size: int = val_data.shape[0]
-            # release memory from large arrays
-            data = None
-            labels = None
-            active_flags = None
+        # if os.path.exists(os.path.join(folder, 'data.npy')) is False:
+        # print('Getting batched_data')
+        # if train_df is None:
+        #     print('Using cached training data')
+        #     train_data: Dict = TFTDataCache.get('train')
+        # else:
+        #     train_data: Dict = self._batch_data(train_df)
+        #
+        # if valid_df is None:
+        #     print('Using cached validation data')
+        #     valid_data: Dict = TFTDataCache.get('valid')
+        # else:
+        #     valid_data: Dict = self._batch_data(valid_df)
+        #
+        # print('Using keras standard fit')
+        #
+        # # def _unpack(data: Dict) -> (ndarray, ndarray, ndarray):
+        # #     return data['inputs'], data['outputs'], \
+        # #            self._get_active_locations(data['active_entries'])
+        #
+        # # Unpack without sample weights
+        # data, labels, active_flags = _unpack(train_data)
+        # # val_data, val_labels, val_flags = _unpack(valid_data)
+        # # save arrays
+        # # folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
+        # save(os.path.join(folder, 'data.npy'), data)
+        # save(os.path.join(folder, 'labels.npy'), labels)
+        # save(os.path.join(folder, 'active_flags.npy'), active_flags)
+        # # data_size: Tuple = data.shape
+        # label_size: Tuple = labels.shape
+        # flag_size: Tuple = active_flags.shape
+        # # valid_size: int = val_data.shape[0]
+        # # release memory from large arrays
+        # data = None
+        # labels = None
+        # active_flags = None
 
         # define train data generator
         def traindata_gen() -> Generator:
-            data = load(os.path.join(folder, 'data.npy'))
-            labels = load(os.path.join(folder, 'labels.npy'))
-            active_flags = load(os.path.join(folder, 'active_flags.npy'))
+            data: memmap = load(os.path.join(self.data_folder, 'data.npy'), mmap_mode='r')
+            labels: memmap = load(os.path.join(self.data_folder, 'labels.npy'), mmap_mode='r')
+            active_flags: memmap = load(os.path.join(self.data_folder, 'active_flags.npy'), mmap_mode='r')
             data_size: Tuple = data.shape
             for i in range(data_size[0] // self.minibatch_size + 1):
                 upper = min((i + 1) * self.minibatch_size, data_size[0])
@@ -1143,16 +1143,33 @@ class TemporalFusionTransformer(object):
             valid_data: Dict = self._batch_data(valid_df)
 
         val_data, val_labels, val_flags = _unpack(valid_data)
-        valid_dataset: Dataset = (
-            tf.data.Dataset.from_tensor_slices(
-                (
-                    val_data,
-                    np.concatenate([val_labels, val_labels, val_labels],
-                                   axis=-1),
-                    val_flags,
-                )
-            )
-        )
+        save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
+        save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
+        save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
+
+        def valdata_gen() -> Generator:
+            data: memmap = load(os.path.join(self.data_folder, 'val_data.npy'), mmap_mode='r')
+            labels: memmap = load(os.path.join(self.data_folder, 'val_labels.npy'), mmap_mode='r')
+            active_flags: memmap = load(os.path.join(self.data_folder, 'val_flags.npy'), mmap_mode='r')
+            data_size: Tuple = data.shape
+            for i in range(data_size[0] // self.minibatch_size + 1):
+                upper = min((i + 1) * self.minibatch_size, data_size[0])
+
+                yield data[i * self.minibatch_size:upper], np.concatenate([labels[i * self.minibatch_size:upper],
+                                                                           labels[i * self.minibatch_size:upper],
+                                                                           labels[i * self.minibatch_size:upper]],
+                                                                          axis=-1), \
+                      active_flags[i * self.minibatch_size:upper]
+
+        print("Wrapping into tensorflow Datasets")
+        valid_dataset: Dataset = tf.data.Dataset.from_generator(valdata_gen,
+                                                                   output_types=(tf.float32, tf.float32, tf.float32),
+                                                                   output_shapes=(tf.TensorShape([None, 192, 5]),
+                                                                                  tf.TensorShape([None, 24, 3]),
+                                                                                  tf.TensorShape([None, 24]),
+                                                                                  )
+                                                                   )
+        valid_dataset: Dataset = valid_dataset.apply(tf.data.experimental.unbatch())
         valid_dataset: Dataset = valid_dataset.batch(self.minibatch_size)
         training_dataset: Dataset = training_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         valid_dataset: Dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
