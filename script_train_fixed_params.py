@@ -105,6 +105,8 @@ def main(expt_name: str,
             tf1.keras.backend.set_session(sess)
 
             params: Dict = opt_manager.get_next_parameters()
+            params['train_samples'] = train_samples
+            params['valid_samples'] = valid_samples
             model: TemporalFusionTransformer = ModelClass(params, use_cudnn=use_gpu)
 
             if not os.path.exists(os.path.join(model.data_folder, 'data.npy')) and not model.training_data_cached():

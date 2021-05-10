@@ -428,6 +428,9 @@ class TemporalFusionTransformer(object):
         self._temp_folder = os.path.join(params['model_folder'], 'tmp')
         self.reset_temp_folder()
 
+        self.train_samples = int(params['train_samples'])
+        self.valid_samples = int(params['valid_samples'])
+
         # Extra components to store Tensorflow nodes for attention computations
         self._input_placeholder = None
         self._attention_components = None
@@ -1174,17 +1177,17 @@ class TemporalFusionTransformer(object):
                       active_flags[i * self.minibatch_size:upper]
 
         print("Wrapping into tensorflow Datasets")
-        valid_dataset: Dataset = tf.data.Dataset.from_generator(valdata_gen,
+        self.valid_dataset: Dataset = tf.data.Dataset.from_generator(valdata_gen,
                                                                    output_types=(tf.float32, tf.float32, tf.float32),
                                                                    output_shapes=(tf.TensorShape([None, 192, 5]),
                                                                                   tf.TensorShape([None, 24, 3]),
                                                                                   tf.TensorShape([None, 24]),
                                                                                   )
                                                                    )
-        valid_dataset: Dataset = valid_dataset.apply(tf.data.experimental.unbatch())
-        valid_dataset: Dataset = valid_dataset.batch(self.minibatch_size)
+        self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
+        self.valid_dataset: Dataset = self.valid_dataset.batch(self.minibatch_size)
         training_dataset: Dataset = training_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-        valid_dataset: Dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+        self.valid_dataset: Dataset = self.valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         # release memory from large arrays
         val_data = None
         val_labels = None
@@ -1195,11 +1198,11 @@ class TemporalFusionTransformer(object):
         self.model.fit(
             training_dataset,
             # sample_weight=active_flags,
-            steps_per_epoch=math.ceil(450000 / self.minibatch_size),
+            steps_per_epoch=math.ceil(self.train_samples / self.minibatch_size),
             epochs=self.num_epochs,
             # batch_size=self.minibatch_size,
-            validation_data=valid_dataset,
-            validation_steps=math.ceil(50000 / self.minibatch_size),
+            validation_data=self.valid_dataset,
+            validation_steps=math.ceil(self.valid_samples / self.minibatch_size),
             callbacks=all_callbacks,
             # shuffle=True,
             # use_multiprocessing=True,
@@ -1225,22 +1228,22 @@ class TemporalFusionTransformer(object):
           Computed evaluation loss.
         """
 
-        if data is None:
-            print('Using cached validation data')
-            raw_data: Dict = TFTDataCache.get('valid')
-        else:
-            raw_data: Dict = self._batch_data(data)
+        # if data is None:
+        #     print('Using cached validation data')
+        #     raw_data: Dict = TFTDataCache.get('valid')
+        # else:
+        #     raw_data: Dict = self._batch_data(data)
+        #
+        # inputs = raw_data['inputs']
+        # outputs = raw_data['outputs']
+        # active_entries = self._get_active_locations(raw_data['active_entries'])
 
-        inputs = raw_data['inputs']
-        outputs = raw_data['outputs']
-        active_entries = self._get_active_locations(raw_data['active_entries'])
-
-        metric_values = self.model.evaluate(
-            x=inputs,
-            y=np.concatenate([outputs, outputs, outputs], axis=-1),
-            sample_weight=active_entries,
-            workers=16,
-            use_multiprocessing=True)
+        metric_values: List = self.model.evaluate(
+            self.valid_dataset,
+            steps=math.ceil(self.valid_samples / self.minibatch_size),
+            # workers=16,
+            # use_multiprocessing=True
+            )
 
         metrics: Series = pd.Series(metric_values, self.model.metrics_names)
 
