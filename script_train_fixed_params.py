@@ -109,6 +109,7 @@ def main(expt_name: str,
 
             if not os.path.exists(os.path.join(model.data_folder, 'data.npy')) and not model.training_data_cached():
                 model.cache_batched_data(train, "train", num_samples=train_samples)
+            if not os.path.exists(os.path.join(model.data_folder, 'val_data.npy')):
                 model.cache_batched_data(valid, "valid", num_samples=valid_samples)
 
             sess.run(tf1.global_variables_initializer())

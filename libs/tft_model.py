@@ -1136,16 +1136,28 @@ class TemporalFusionTransformer(object):
         training_dataset: Dataset = training_dataset.apply(tf.data.experimental.unbatch())
         training_dataset: Dataset = training_dataset.batch(self.minibatch_size)
 
-        if valid_df is None:
+        if valid_df is None and not os.path.exists(os.path.join(self.data_folder, 'val_data.npy')):
             print('Using cached validation data')
             valid_data: Dict = TFTDataCache.get('valid')
-        else:
+        elif not os.path.exists(os.path.join(self.data_folder, 'val_data.npy')):
             valid_data: Dict = self._batch_data(valid_df)
+            val_data, val_labels, val_flags = _unpack(valid_data)
+            save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
+            save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
+            save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
+            del val_data
+            del val_labels
+            del val_flags
+        else:
+            pass
 
-        val_data, val_labels, val_flags = _unpack(valid_data)
-        save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
-        save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
-        save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
+        # val_data, val_labels, val_flags = _unpack(valid_data)
+        # save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
+        # save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
+        # save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
+        # del val_data
+        # del val_labels
+        # del val_flags
 
         def valdata_gen() -> Generator:
             data: memmap = load(os.path.join(self.data_folder, 'val_data.npy'), mmap_mode='r')
