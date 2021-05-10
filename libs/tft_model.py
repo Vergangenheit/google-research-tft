@@ -7,7 +7,7 @@ import gc
 import json
 import os
 import shutil
-from typing import Union, Tuple, List, Dict, Optional
+from typing import Union, Tuple, List, Dict, Optional, Generator
 import math
 from data_formatters.base import InputTypes
 import libs.utils as utils
@@ -40,12 +40,12 @@ def linear_layer(size,
                  use_time_distributed=False,
                  use_bias=True) -> Dense:
     """Returns simple Keras linear layer.
-  Args:
-    size: Output size
-    activation: Activation function to apply if required
-    use_time_distributed: Whether to apply layer across time
-    use_bias: Whether bias should be included in layer
-  """
+      Args:
+        size: Output size
+        activation: Activation function to apply if required
+        use_time_distributed: Whether to apply layer across time
+        use_bias: Whether bias should be included in layer
+    """
     linear = tf.keras.layers.Dense(size, activation=activation, use_bias=use_bias)
     if use_time_distributed:
         linear = tf.keras.layers.TimeDistributed(linear)
@@ -59,16 +59,16 @@ def apply_mlp(inputs: Union[Input, Tensor],
               hidden_activation: str = 'tanh',
               use_time_distributed: bool = False) -> Union[Dense, TimeDistributed]:
     """Applies simple feed-forward network to an input.
-  Args:
-    inputs: MLP inputs
-    hidden_size: Hidden state size
-    output_size: Output size of MLP
-    output_activation: Activation function to apply on output
-    hidden_activation: Activation function to apply on input
-    use_time_distributed: Whether to apply across time
-  Returns:
-    Tensor for MLP outputs.
-  """
+      Args:
+        inputs: MLP inputs
+        hidden_size: Hidden state size
+        output_size: Output size of MLP
+        output_activation: Activation function to apply on output
+        hidden_activation: Activation function to apply on input
+        use_time_distributed: Whether to apply across time
+      Returns:
+        Tensor for MLP outputs.
+    """
     if use_time_distributed:
         hidden = tf.keras.layers.TimeDistributed(
             tf.keras.layers.Dense(hidden_size, activation=hidden_activation))(
@@ -91,16 +91,16 @@ def apply_gating_layer(x: Union[Input, Tensor],
                        use_time_distributed: bool = True,
                        activation: str = None) -> Tuple[Tensor]:
     """Applies a Gated Linear Unit (GLU) to an input.
-  Args:
-    x: Input to gating layer
-    hidden_layer_size: Dimension of GLU
-    dropout_rate: Dropout rate to apply if any
-    use_time_distributed: Whether to apply across time
-    activation: Activation function to apply to the linear feature transform if
-      necessary
-  Returns:
-    Tuple of tensors for: (GLU output, gate)
-  """
+      Args:
+        x: Input to gating layer
+        hidden_layer_size: Dimension of GLU
+        dropout_rate: Dropout rate to apply if any
+        use_time_distributed: Whether to apply across time
+        activation: Activation function to apply to the linear feature transform if
+          necessary
+      Returns:
+        Tuple of tensors for: (GLU output, gate)
+    """
 
     if dropout_rate is not None:
         x = tf.keras.layers.Dropout(dropout_rate)(x)
@@ -126,11 +126,11 @@ def apply_gating_layer(x: Union[Input, Tensor],
 
 def add_and_norm(x_list: List) -> Tensor:
     """Applies skip connection followed by layer normalisation.
-  Args:
-    x_list: List of inputs to sum for skip connection
-  Returns:
-    Tensor output from layer.
-  """
+      Args:
+        x_list: List of inputs to sum for skip connection
+      Returns:
+        Tensor output from layer.
+    """
     tmp: Tensor = Add()(x_list)
     tmp: Tensor = LayerNorm()(tmp)
     return tmp
@@ -144,17 +144,17 @@ def gated_residual_network(x: Union[Input, Tensor],
                            additional_context=None,
                            return_gate=False) -> Union[Tuple[Tensor], Tensor]:
     """Applies the gated residual network (GRN) as defined in paper.
-  Args:
-    x: Network inputs
-    hidden_layer_size: Internal state size
-    output_size: Size of output layer
-    dropout_rate: Dropout rate if dropout is applied
-    use_time_distributed: Whether to apply network across time dimension
-    additional_context: Additional context vector to use if relevant
-    return_gate: Whether to return GLU gate for diagnostic purposes
-  Returns:
-    Tuple of tensors for: (GRN output, GLU gate)
-  """
+      Args:
+        x: Network inputs
+        hidden_layer_size: Internal state size
+        output_size: Size of output layer
+        dropout_rate: Dropout rate if dropout is applied
+        use_time_distributed: Whether to apply network across time dimension
+        additional_context: Additional context vector to use if relevant
+        return_gate: Whether to return GLU gate for diagnostic purposes
+      Returns:
+        Tuple of tensors for: (GRN output, GLU gate)
+    """
 
     # Setup skip connection
     if output_size is None:
@@ -202,8 +202,8 @@ def gated_residual_network(x: Union[Input, Tensor],
 # Attention Components.
 def get_decoder_mask(self_attn_inputs: Union[Tensor, Input]) -> Tensor:
     """Returns causal mask to apply for self-attention layer.
-    Args:
-    self_attn_inputs: Inputs to self attention layer to determine mask shape
+        Args:
+        self_attn_inputs: Inputs to self attention layer to determine mask shape
     """
     len_s = tf.shape(self_attn_inputs)[1]
     bs = tf.shape(self_attn_inputs)[:1]
@@ -213,11 +213,11 @@ def get_decoder_mask(self_attn_inputs: Union[Tensor, Input]) -> Tensor:
 
 class ScaledDotProductAttention:
     """Defines scaled dot product attention layer.
-  Attributes:
-    dropout: Dropout rate to use
-    activation: Normalisation function for scaled dot product attention (e.g.
-      softmax by default)
-  """
+      Attributes:
+        dropout: Dropout rate to use
+        activation: Normalisation function for scaled dot product attention (e.g.
+          softmax by default)
+    """
 
     def __init__(self, attn_dropout: float = 0.0):
         self.dropout = Dropout(attn_dropout)
@@ -225,14 +225,14 @@ class ScaledDotProductAttention:
 
     def __call__(self, q, k, v, mask) -> (Tensor, Tensor):
         """Applies scaled dot product attention.
-    Args:
-      q: Queries
-      k: Keys
-      v: Values
-      mask: Masking if required -- sets softmax to very large value
-    Returns:
-      Tuple of (layer outputs, attention weights)
-    """
+            Args:
+              q: Queries
+              k: Keys
+              v: Values
+              mask: Masking if required -- sets softmax to very large value
+            Returns:
+              Tuple of (layer outputs, attention weights)
+        """
         temper: Tensor = tf.sqrt(tf.cast(tf.shape(k)[-1], dtype='float32'))
         attn = Lambda(lambda x: K.batch_dot(x[0], x[1], axes=[2, 2]) / temper)(
             [q, k])  # shape=(batch, q, k)
@@ -248,26 +248,26 @@ class ScaledDotProductAttention:
 
 class InterpretableMultiHeadAttention:
     """Defines interpretable multi-head attention layer.
-  Attributes:
-    n_head: Number of heads
-    d_k: Key/query dimensionality per head
-    d_v: Value dimensionality
-    dropout: Dropout rate to apply
-    qs_layers: List of queries across heads
-    ks_layers: List of keys across heads
-    vs_layers: List of values across heads
-    attention: Scaled dot product attention layer
-    w_o: Output weight matrix to project internal state to the original TFT
-      state size
-  """
+      Attributes:
+        n_head: Number of heads
+        d_k: Key/query dimensionality per head
+        d_v: Value dimensionality
+        dropout: Dropout rate to apply
+        qs_layers: List of queries across heads
+        ks_layers: List of keys across heads
+        vs_layers: List of values across heads
+        attention: Scaled dot product attention layer
+        w_o: Output weight matrix to project internal state to the original TFT
+          state size
+    """
 
     def __init__(self, n_head: int, d_model: int, dropout: float):
         """Initialises layer.
-    Args:
-      n_head: Number of heads
-      d_model: TFT state dimensionality
-      dropout: Dropout discard rate
-    """
+            Args:
+              n_head: Number of heads
+              d_model: TFT state dimensionality
+              dropout: Dropout discard rate
+        """
 
         self.n_head = n_head
         self.d_k = self.d_v = d_k = d_v = d_model // n_head
@@ -290,15 +290,15 @@ class InterpretableMultiHeadAttention:
 
     def __call__(self, q, k, v, mask=None) -> (Tensor, Tensor):
         """Applies interpretable multihead attention.
-    Using T to denote the number of time steps fed into the transformer.
-    Args:
-      q: Query tensor of shape=(?, T, d_model)
-      k: Key of shape=(?, T, d_model)
-      v: Values of shape=(?, T, d_model)
-      mask: Masking if required with shape=(?, T, T)
-    Returns:
-      Tuple of (layer outputs, attention weights)
-    """
+            Using T to denote the number of time steps fed into the transformer.
+            Args:
+              q: Query tensor of shape=(?, T, d_model)
+              k: Key of shape=(?, T, d_model)
+              v: Values of shape=(?, T, d_model)
+              mask: Masking if required with shape=(?, T, T)
+            Returns:
+              Tuple of (layer outputs, attention weights)
+        """
         n_head = self.n_head
 
         heads = []
@@ -330,10 +330,10 @@ class TFTDataCache(object):
     @classmethod
     def update(cls, data: Dict, key: str):
         """Updates cached data.
-    Args:
-      data: Source to update
-      key: Key to dictionary location
-    """
+        Args:
+          data: Source to update
+          key: Key to dictionary location
+        """
         cls._data_cache[key] = data
 
     @classmethod
@@ -351,41 +351,41 @@ class TFTDataCache(object):
 # TFT model definitions.
 class TemporalFusionTransformer(object):
     """Defines Temporal Fusion Transformer.
-  Attributes:
-    name: Name of model
-    time_steps: Total number of input time steps per forecast date (i.e. Width
-      of Temporal fusion decoder N)
-    input_size: Total number of inputs
-    output_size: Total number of outputs
-    category_counts: Number of categories per categorical variable
-    n_multiprocessing_workers: Number of workers to use for parallel
-      computations
-    column_definition: List of tuples of (string, DataType, InputType) that
-      define each column
-    quantiles: Quantiles to forecast for TFT
-    use_cudnn: Whether to use Keras CuDNNLSTM or standard LSTM layers
-    hidden_layer_size: Internal state size of TFT
-    dropout_rate: Dropout discard rate
-    max_gradient_norm: Maximum norm for gradient clipping
-    learning_rate: Initial learning rate of ADAM optimizer
-    minibatch_size: Size of minibatches for training
-    num_epochs: Maximum number of epochs for training
-    early_stopping_patience: Maximum number of iterations of non-improvement
-      before early stopping kicks in
-    num_encoder_steps: Size of LSTM encoder -- i.e. number of past time steps
-      before forecast date to use
-    num_stacks: Number of self-attention layers to apply (default is 1 for basic
-      TFT)
-    num_heads: Number of heads for interpretable mulit-head attention
-    model: Keras model for TFT
-  """
-
-    def __init__(self, raw_params, use_cudnn: bool = False):
-        """Builds TFT from parameters.
-    Args:
-      raw_params: Parameters to define TFT
-      use_cudnn: Whether to use CUDNN GPU optimised LSTM
+      Attributes:
+        name: Name of model
+        time_steps: Total number of input time steps per forecast date (i.e. Width
+          of Temporal fusion decoder N)
+        input_size: Total number of inputs
+        output_size: Total number of outputs
+        category_counts: Number of categories per categorical variable
+        n_multiprocessing_workers: Number of workers to use for parallel
+          computations
+        column_definition: List of tuples of (string, DataType, InputType) that
+          define each column
+        quantiles: Quantiles to forecast for TFT
+        use_cudnn: Whether to use Keras CuDNNLSTM or standard LSTM layers
+        hidden_layer_size: Internal state size of TFT
+        dropout_rate: Dropout discard rate
+        max_gradient_norm: Maximum norm for gradient clipping
+        learning_rate: Initial learning rate of ADAM optimizer
+        minibatch_size: Size of minibatches for training
+        num_epochs: Maximum number of epochs for training
+        early_stopping_patience: Maximum number of iterations of non-improvement
+          before early stopping kicks in
+        num_encoder_steps: Size of LSTM encoder -- i.e. number of past time steps
+          before forecast date to use
+        num_stacks: Number of self-attention layers to apply (default is 1 for basic
+          TFT)
+        num_heads: Number of heads for interpretable mulit-head attention
+        model: Keras model for TFT
     """
+
+    def __init__(self, raw_params: Dict, use_cudnn: bool = False):
+        """Builds TFT from parameters.
+        Args:
+          raw_params: Parameters to define TFT
+          use_cudnn: Whether to use CUDNN GPU optimised LSTM
+        """
 
         self.name = self.__class__.__name__
 
@@ -441,13 +441,13 @@ class TemporalFusionTransformer(object):
 
     def get_tft_embeddings(self, all_inputs):
         """Transforms raw inputs to embeddings.
-    Applies linear transformation onto continuous variables and uses embeddings
-    for categorical variables.
-    Args:
-      all_inputs: Inputs to transform
-    Returns:
-      Tensors for transformed inputs.
-    """
+            Applies linear transformation onto continuous variables and uses embeddings
+            for categorical variables.
+            Args:
+              all_inputs: Inputs to transform
+            Returns:
+              Tensors for transformed inputs.
+        """
 
         time_steps = self.time_steps
 
@@ -569,11 +569,11 @@ class TemporalFusionTransformer(object):
 
     def cache_batched_data(self, data: DataFrame, cache_key: str, num_samples: int = -1):
         """Batches and caches data once for using during training.
-    Args:
-      data: Data to batch and cache
-      cache_key: Key used for cache
-      num_samples: Maximum number of samples to extract (-1 to use all data)
-    """
+            Args:
+              data: Data to batch and cache
+              cache_key: Key used for cache
+              num_samples: Maximum number of samples to extract (-1 to use all data)
+        """
 
         if num_samples > 0:
             TFTDataCache.update(
@@ -585,12 +585,12 @@ class TemporalFusionTransformer(object):
 
     def _batch_sampled_data(self, data: DataFrame, max_samples: int) -> Dict:
         """Samples segments into a compatible format.
-    Args:
-      data: Sources data to sample and batch
-      max_samples: Maximum number of samples in batch
-    Returns:
-      Dictionary of batched data with the maximum samples specified.
-    """
+            Args:
+              data: Sources data to sample and batch
+              max_samples: Maximum number of samples in batch
+            Returns:
+              Dictionary of batched data with the maximum samples specified.
+        """
 
         if max_samples < 1:
             raise ValueError(
@@ -662,13 +662,13 @@ class TemporalFusionTransformer(object):
 
     def _batch_data(self, data: DataFrame) -> Dict:
         """Batches data for training.
-    Converts raw dataframe from a 2-D tabular format to a batched 3-D array
-    to feed into Keras model.
-    Args:
-      data: DataFrame to batch
-    Returns:
-      Batched Numpy array with shape=(?, self.time_steps, self.input_size)
-    """
+        Converts raw dataframe from a 2-D tabular format to a batched 3-D array
+        to feed into Keras model.
+        Args:
+          data: DataFrame to batch
+        Returns:
+          Batched Numpy array with shape=(?, self.time_steps, self.input_size)
+        """
 
         # Functions.
         def _batch_single_entity(input_data: Series) -> Optional[ndarray]:
@@ -767,11 +767,11 @@ class TemporalFusionTransformer(object):
 
         def static_combine_and_mask(embedding):
             """Applies variable selection network to static inputs.
-      Args:
-        embedding: Transformed static inputs
-      Returns:
-        Tensor output for variable selection network
-      """
+              Args:
+                embedding: Transformed static inputs
+              Returns:
+                Tensor output for variable selection network
+            """
 
             # Add temporal features
             _, num_static, _ = embedding.get_shape().as_list()
@@ -833,11 +833,11 @@ class TemporalFusionTransformer(object):
 
         def lstm_combine_and_mask(embedding):
             """Apply temporal variable selection networks.
-      Args:
-        embedding: Transformed inputs.
-      Returns:
-        Processed tensor outputs.
-      """
+              Args:
+                embedding: Transformed inputs.
+              Returns:
+                Processed tensor outputs.
+            """
 
             # Add temporal features
             _, time_steps, embedding_dim, num_inputs = embedding.get_shape().as_list()
@@ -979,9 +979,9 @@ class TemporalFusionTransformer(object):
 
     def build_model(self):
         """Build model and defines training losses.
-    Returns:
-      Fully defined Keras model.
-    """
+        Returns:
+          Fully defined Keras model.
+        """
 
         with tf.compat.v1.variable_scope(self.name):
 
@@ -1065,12 +1065,76 @@ class TemporalFusionTransformer(object):
             tf.keras.callbacks.TerminateOnNaN()
         ]
 
-        print('Getting batched_data')
-        if train_df is None:
-            print('Using cached training data')
-            train_data: Dict = TFTDataCache.get('train')
-        else:
-            train_data: Dict = self._batch_data(train_df)
+        def _unpack(data: Dict) -> (ndarray, ndarray, ndarray):
+            return data['inputs'], data['outputs'], \
+                   self._get_active_locations(data['active_entries'])
+
+        # check if data are already generated
+        folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
+
+        if os.path.exists(os.path.join(folder, 'data.npy')) is False:
+            print('Getting batched_data')
+            if train_df is None:
+                print('Using cached training data')
+                train_data: Dict = TFTDataCache.get('train')
+            else:
+                train_data: Dict = self._batch_data(train_df)
+
+            if valid_df is None:
+                print('Using cached validation data')
+                valid_data: Dict = TFTDataCache.get('valid')
+            else:
+                valid_data: Dict = self._batch_data(valid_df)
+
+            print('Using keras standard fit')
+
+            # def _unpack(data: Dict) -> (ndarray, ndarray, ndarray):
+            #     return data['inputs'], data['outputs'], \
+            #            self._get_active_locations(data['active_entries'])
+
+            # Unpack without sample weights
+            data, labels, active_flags = _unpack(train_data)
+            # val_data, val_labels, val_flags = _unpack(valid_data)
+            # save arrays
+            # folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
+            save(os.path.join(folder, 'data.npy'), data)
+            save(os.path.join(folder, 'labels.npy'), labels)
+            save(os.path.join(folder, 'active_flags.npy'), active_flags)
+            # data_size: Tuple = data.shape
+            label_size: Tuple = labels.shape
+            flag_size: Tuple = active_flags.shape
+            # valid_size: int = val_data.shape[0]
+            # release memory from large arrays
+            data = None
+            labels = None
+            active_flags = None
+
+        # define train data generator
+        def traindata_gen() -> Generator:
+            data = load(os.path.join(folder, 'data.npy'))
+            labels = load(os.path.join(folder, 'labels.npy'))
+            active_flags = load(os.path.join(folder, 'active_flags.npy'))
+            data_size: Tuple = data.shape
+            for i in range(data_size[0] // self.minibatch_size + 1):
+                upper = min((i + 1) * self.minibatch_size, data_size[0])
+
+                yield data[i * self.minibatch_size:upper], np.concatenate([labels[i * self.minibatch_size:upper],
+                                                                           labels[i * self.minibatch_size:upper],
+                                                                           labels[i * self.minibatch_size:upper]],
+                                                                          axis=-1), \
+                      active_flags[i * self.minibatch_size:upper]
+
+        # wrap into tf.data.Dataset
+        print("Wrapping into tensorflow Datasets")
+        training_dataset: Dataset = tf.data.Dataset.from_generator(traindata_gen,
+                                                                   output_types=(tf.float32, tf.float32, tf.float32),
+                                                                   output_shapes=(tf.TensorShape([None, 192, 5]),
+                                                                                  tf.TensorShape([None, 24, 3]),
+                                                                                  tf.TensorShape([None, 24]),
+                                                                                  )
+                                                                   )
+        training_dataset: Dataset = training_dataset.apply(tf.data.experimental.unbatch())
+        training_dataset: Dataset = training_dataset.batch(self.minibatch_size)
 
         if valid_df is None:
             print('Using cached validation data')
@@ -1078,41 +1142,7 @@ class TemporalFusionTransformer(object):
         else:
             valid_data: Dict = self._batch_data(valid_df)
 
-        print('Using keras standard fit')
-
-        def _unpack(data: Dict):
-            return data['inputs'], data['outputs'], \
-                   self._get_active_locations(data['active_entries'])
-
-        # Unpack without sample weights
-        data, labels, active_flags = _unpack(train_data)
         val_data, val_labels, val_flags = _unpack(valid_data)
-        # save arrays
-        folder: str = r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data\electricity\data\electricity'
-        save(os.path.join(folder, 'data.npz'), data)
-        save(os.path.join(folder, 'labels.npz'), labels)
-        save(os.path.join(folder, 'active_flags.npz'), active_flags)
-        train_size = data.shape[0]
-        valid_size = val_data.shape[0]
-        # release memory from large arrays
-        data = None
-        labels = None
-        active_flags = None
-
-        # define train data generator
-        def traindata_gen():
-            data = load(os.path.join(folder, 'data.npz'))
-            labels = load(os.path.join(folder, 'labels.npz'))
-            active_flags = load(os.path.join(folder, 'active_flags.npz'))
-            for i in range(train_size // self.minibatch_size + 1):
-                upper = min((i + 1) * self.minibatch_size, train_size)
-
-                yield data[i * self.minibatch_size:upper], labels[i * self.minibatch_size:upper], active_flags[i * self.minibatch_size:upper]
-
-        # wrap into tf.data.Dataset
-        print("Wrapping into tensorflow Datasets")
-        training_dataset: Dataset = tf.data.Dataset.from_generator(traindata_gen)
-        training_dataset: Dataset = training_dataset.batch(self.minibatch_size)
         valid_dataset: Dataset = (
             tf.data.Dataset.from_tensor_slices(
                 (
@@ -1136,15 +1166,16 @@ class TemporalFusionTransformer(object):
         self.model.fit(
             training_dataset,
             # sample_weight=active_flags,
-            steps_per_epoch=math.ceil(train_size / self.minibatch_size),
+            steps_per_epoch=math.ceil(450000 / self.minibatch_size),
             epochs=self.num_epochs,
             # batch_size=self.minibatch_size,
             validation_data=valid_dataset,
-            validation_steps=math.ceil(valid_size / self.minibatch_size),
+            validation_steps=math.ceil(50000 / self.minibatch_size),
             callbacks=all_callbacks,
             # shuffle=True,
-            use_multiprocessing=True,
-            workers=self.n_multiprocessing_workers)
+            # use_multiprocessing=True,
+            # workers=self.n_multiprocessing_workers
+        )
 
         # Load best checkpoint again
         tmp_checkpont: str = self.get_keras_saved_path(self._temp_folder)
@@ -1186,7 +1217,7 @@ class TemporalFusionTransformer(object):
 
         return metrics[eval_metric]
 
-    def predict(self, df, return_targets=False) -> Dict:
+    def predict(self, df: DataFrame, return_targets=False) -> Dict:
         """Computes predictions for a given input dataset.
         Args:
           df: Input dataframe
@@ -1196,7 +1227,7 @@ class TemporalFusionTransformer(object):
           Input dataframe or tuple of (input dataframe, algined output dataframe).
         """
 
-        data = self._batch_data(df)
+        data: Dict = self._batch_data(df)
 
         inputs = data['inputs']
         time = data['time']
@@ -1213,7 +1244,7 @@ class TemporalFusionTransformer(object):
         if self.output_size != 1:
             raise NotImplementedError('Current version only supports 1D targets!')
 
-        def format_outputs(prediction):
+        def format_outputs(prediction: Union[List, ndarray]) -> DataFrame:
             """Returns formatted dataframes for prediction."""
 
             flat_prediction = pd.DataFrame(
@@ -1230,7 +1261,7 @@ class TemporalFusionTransformer(object):
             return flat_prediction[['forecast_time', 'identifier'] + cols]
 
         # Extract predictions for each quantile into different entries
-        process_map = {
+        process_map: Dict = {
             'p{}'.format(int(q * 100)):
                 combined[Ellipsis, i * self.output_size:(i + 1) * self.output_size]
             for i, q in enumerate(self.quantiles)
