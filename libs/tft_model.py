@@ -425,8 +425,9 @@ class TemporalFusionTransformer(object):
         self.num_heads = int(params['num_heads'])
 
         # Serialisation options
-        self._temp_folder = os.path.join(params['model_folder'], 'tmp')
-        self.reset_temp_folder()
+        self._temp_folder = params['model_folder']
+        # self._temp_folder = os.path.join(params['model_folder'], 'tmp')
+        # self.reset_temp_folder()
 
         self.train_samples = int(params['train_samples'])
         self.valid_samples = int(params['valid_samples'])
@@ -1054,7 +1055,7 @@ class TemporalFusionTransformer(object):
         """
 
         print('*** Fitting {} ***'.format(self.name))
-
+        file_path: str = os.path.join(self._temp_folder, "electricity-epoch{epoch:03d}-loss{val_loss:.4f}.hdf5")
         # Add relevant callbacks
         callbacks: List = [
             tf.keras.callbacks.EarlyStopping(
@@ -1062,10 +1063,12 @@ class TemporalFusionTransformer(object):
                 patience=self.early_stopping_patience,
                 min_delta=1e-4),
             tf.keras.callbacks.ModelCheckpoint(
-                filepath=self.get_keras_saved_path(self._temp_folder),
+                filepath=file_path,
                 monitor='val_loss',
                 save_best_only=True,
-                save_weights_only=True),
+                mode='min',
+                # save_weights_only=True
+                ),
             tf.keras.callbacks.TerminateOnNaN()
         ]
 
