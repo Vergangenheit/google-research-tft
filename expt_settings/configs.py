@@ -70,7 +70,7 @@ class ExperimentConfig(object):
         return 240 if self.experiment == 'volatility' else 60
 
     def make_data_formatter(self) -> Union[
-        VolatilityFormatter, ElectricityFormatter, TrafficFormatter, FavoritaFormatter]:
+        VolatilityFormatter, ElectricityFormatter, TrafficFormatter, FavoritaFormatter, ErgFormatter]:
         """Gets a data formatter object for experiment.
     Returns:
       Default DataFormatter per experiment.
