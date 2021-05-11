@@ -115,12 +115,12 @@ class ElectricityFormatter(GenericDataFormatter):
 
     def transform_inputs(self, df: DataFrame) -> DataFrame:
         """Performs feature transformations.
-    This includes both feature engineering, preprocessing and normalisation.
-    Args:
-      df: Data frame to transform.
-    Returns:
-      Transformed data frame.
-    """
+            This includes both feature engineering, preprocessing and normalisation.
+            Args:
+              df: Data frame to transform.
+            Returns:
+              Transformed data frame.
+        """
 
         if self._real_scalers is None and self._cat_scalers is None:
             raise ValueError('Scalers have not been set!')
@@ -158,11 +158,11 @@ class ElectricityFormatter(GenericDataFormatter):
 
     def format_predictions(self, predictions: DataFrame) -> DataFrame:
         """Reverts any normalisation to give predictions in original scale.
-    Args:
-      predictions: Dataframe of model predictions.
-    Returns:
-      Data frame of unnormalised predictions.
-    """
+            Args:
+              predictions: Dataframe of model predictions.
+            Returns:
+              Data frame of unnormalised predictions.
+        """
 
         if self._target_scaler is None:
             raise ValueError('Scalers have not been set!')
