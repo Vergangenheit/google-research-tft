@@ -89,7 +89,7 @@ def apply_gating_layer(x: Union[Input, Tensor],
                        hidden_layer_size: int,
                        dropout_rate: float = None,
                        use_time_distributed: bool = True,
-                       activation: str = None) -> Tuple[Tensor]:
+                       activation: str = None) -> (Tensor, Tensor):
     """Applies a Gated Linear Unit (GLU) to an input.
       Args:
         x: Input to gating layer
@@ -1178,12 +1178,12 @@ class TemporalFusionTransformer(object):
 
         print("Wrapping into tensorflow Datasets")
         self.valid_dataset: Dataset = tf.data.Dataset.from_generator(valdata_gen,
-                                                                   output_types=(tf.float32, tf.float32, tf.float32),
-                                                                   output_shapes=(tf.TensorShape([None, 192, 5]),
-                                                                                  tf.TensorShape([None, 24, 3]),
-                                                                                  tf.TensorShape([None, 24]),
-                                                                                  )
-                                                                   )
+                                                                     output_types=(tf.float32, tf.float32, tf.float32),
+                                                                     output_shapes=(tf.TensorShape([None, 192, 5]),
+                                                                                    tf.TensorShape([None, 24, 3]),
+                                                                                    tf.TensorShape([None, 24]),
+                                                                                    )
+                                                                     )
         self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
         self.valid_dataset: Dataset = self.valid_dataset.batch(self.minibatch_size)
         training_dataset: Dataset = training_dataset.prefetch(tf.data.experimental.AUTOTUNE)
@@ -1243,7 +1243,7 @@ class TemporalFusionTransformer(object):
             steps=math.ceil(self.valid_samples / self.minibatch_size),
             # workers=16,
             # use_multiprocessing=True
-            )
+        )
 
         metrics: Series = pd.Series(metric_values, self.model.metrics_names)
 
@@ -1324,7 +1324,7 @@ class TemporalFusionTransformer(object):
             input_placeholder = self._input_placeholder
             attention_weights = {}
             for k in self._attention_components:
-                attention_weight = tf.keras.backend.get_session().run(
+                attention_weight = tf.compat.v1.keras.backend.get_session().run(
                     self._attention_components[k],
                     {input_placeholder: input_batch.astype(np.float32)})
                 attention_weights[k] = attention_weight
@@ -1375,21 +1375,21 @@ class TemporalFusionTransformer(object):
         shutil.rmtree(self._temp_folder)
         os.makedirs(self._temp_folder)
 
-    def get_keras_saved_path(self, model_folder):
+    def get_keras_saved_path(self, model_folder: str):
         """Returns path to keras checkpoint."""
         return os.path.join(model_folder, '{}.check'.format(self.name))
 
-    def save(self, model_folder):
+    def save(self, model_folder: str):
         """Saves optimal TFT weights.
-    Args:
-      model_folder: Location to serialze model.
-    """
+            Args:
+            model_folder: Location to serialze model.
+        """
         # Allows for direct serialisation of tensorflow variables to avoid spurious
         # issue with Keras that leads to different performance evaluation results
         # when model is reloaded (https://github.com/keras-team/keras/issues/4875).
 
         utils.save(
-            tf.keras.backend.get_session(),
+            tf.compat.v1.keras.backend.get_session(),
             model_folder,
             cp_name=self.name,
             scope=self.name)
@@ -1409,7 +1409,7 @@ class TemporalFusionTransformer(object):
         else:
             # Loads tensorflow graph for optimal models.
             utils.load(
-                tf.keras.backend.get_session(),
+                tf.compat.v1.keras.backend.get_session(),
                 model_folder,
                 cp_name=self.name,
                 scope=self.name)
