@@ -38,14 +38,14 @@ class ElectricityFormatter(GenericDataFormatter):
 
     def split_data(self, df: DataFrame, valid_boundary=1315, test_boundary=1339) -> (DataFrame, DataFrame, DataFrame):
         """Splits data frame into training-validation-test data frames.
-    This also calibrates scaling object, and transforms data for each split.
-    Args:
-      df: Source data frame to split.
-      valid_boundary: Starting year for validation data
-      test_boundary: Starting year for test data
-    Returns:
-      Tuple of transformed (train, valid, test) data.
-    """
+            This also calibrates scaling object, and transforms data for each split.
+            Args:
+              df: Source data frame to split.
+              valid_boundary: Starting year for validation data
+              test_boundary: Starting year for test data
+            Returns:
+              Tuple of transformed (train, valid, test) data.
+        """
 
         print('Formatting train-valid-test splits.')
 
@@ -60,9 +60,9 @@ class ElectricityFormatter(GenericDataFormatter):
 
     def set_scalers(self, df: DataFrame):
         """Calibrates scalers using the data supplied.
-    Args:
-      df: Data to use to calibrate scalers.
-    """
+            Args:
+              df: Data to use to calibrate scalers.
+        """
         print('Setting scalers with training data...')
 
         column_definitions = self.get_column_definition()
