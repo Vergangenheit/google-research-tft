@@ -1186,8 +1186,8 @@ class TemporalFusionTransformer(object):
                                                                      )
         self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
         self.valid_dataset: Dataset = self.valid_dataset.batch(self.minibatch_size)
-        training_dataset = training_dataset.repeat(1)
-        self.valid_dataset = self.valid_dataset.repeat(1)
+        training_dataset = training_dataset.repeat(self.num_epochs)
+        self.valid_dataset = self.valid_dataset.repeat(self.num_epochs)
         training_dataset: Dataset = training_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         self.valid_dataset: Dataset = self.valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         # release memory from large arrays
