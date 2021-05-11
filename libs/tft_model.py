@@ -1202,7 +1202,7 @@ class TemporalFusionTransformer(object):
             # sample_weight=active_flags,
             steps_per_epoch=math.ceil(450000 / self.minibatch_size),
             epochs=self.num_epochs,
-            # batch_size=self.minibatch_size,
+            batch_size=self.minibatch_size,
             validation_data=self.valid_dataset,
             validation_steps=math.ceil(50000 / self.minibatch_size),
             callbacks=all_callbacks,
