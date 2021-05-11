@@ -1067,7 +1067,7 @@ class TemporalFusionTransformer(object):
                 monitor='val_loss',
                 save_best_only=True,
                 mode='min',
-                # save_weights_only=True
+                save_weights_only=True,
                 ),
             tf.keras.callbacks.TerminateOnNaN()
         ]
