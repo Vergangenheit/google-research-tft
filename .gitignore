@@ -1,8 +1,9 @@
 venv
 env
 .idea
-outputs/
+outputs/**/*.npy
+outputs/**/*.zip
 **/__pycache__
 **/*.pyc
- __pycache__/
- *.pyc
+__pycache__/
+*.pyc
