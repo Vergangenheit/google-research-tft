@@ -43,6 +43,7 @@ def extract_cols_from_data_type(data_type: DataTypes, column_definition,
         if tup[1] == data_type and tup[2] not in excluded_input_types
     ]
 
+
 # Loss functions.
 def tensorflow_quantile_loss(y: Tensor, y_pred: Tensor, quantile: float) -> Tensor:
     """Computes quantile loss for tensorflow.
@@ -101,7 +102,7 @@ def create_folder_if_not_exist(directory: Union[str, Path]):
 
 
 # Tensorflow related functions.
-def get_default_tensorflow_config(tf_device: str ='gpu', gpu_id: int =0):
+def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0):
     """Creates tensorflow config for graphs to run on CPU or GPU.
   Specifies whether to run graph on gpu or cpu and which GPU ID to use for multi
   GPU machines.

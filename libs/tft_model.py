@@ -1234,22 +1234,29 @@ class TemporalFusionTransformer(object):
           Computed evaluation loss.
         """
 
-        # if data is None:
-        #     print('Using cached validation data')
-        #     raw_data: Dict = TFTDataCache.get('valid')
-        # else:
-        #     raw_data: Dict = self._batch_data(data)
-        #
-        # inputs = raw_data['inputs']
-        # outputs = raw_data['outputs']
-        # active_entries = self._get_active_locations(raw_data['active_entries'])
+        if data is None:
+            print('Using cached validation data')
+            raw_data = TFTDataCache.get('valid')
+        else:
+            raw_data = self._batch_data(data)
 
-        metric_values: List = self.model.evaluate(
-            self.valid_dataset,
-            steps=math.ceil(self.valid_samples / self.minibatch_size),
-            # workers=16,
-            # use_multiprocessing=True
-        )
+        inputs = raw_data['inputs']
+        outputs = raw_data['outputs']
+        active_entries = self._get_active_locations(raw_data['active_entries'])
+
+        metric_values = self.model.evaluate(
+            x=inputs,
+            y=np.concatenate([outputs, outputs, outputs], axis=-1),
+            sample_weight=active_entries,
+            workers=16,
+            use_multiprocessing=True)
+        # data_size, label_size, flag_size, val_size = self.get_shapes()
+        # metric_values: List = self.model.evaluate(
+        #     self.valid_dataset,
+        #     steps=math.ceil(val_size[0] / self.minibatch_size),
+        #     # workers=16,
+        #     # use_multiprocessing=True
+        # )
 
         metrics: Series = pd.Series(metric_values, self.model.metrics_names)
 
