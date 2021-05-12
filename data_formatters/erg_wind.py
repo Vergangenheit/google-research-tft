@@ -76,6 +76,7 @@ class ErgFormatter(GenericDataFormatter):
         column_definitions = self.get_column_definition()
 
     def get_column_definition(self):
+        pass
 
 
 
