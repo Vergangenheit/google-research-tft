@@ -54,8 +54,8 @@ def main(expt_name: str,
         print('Default GPU Device:{}'.format(tf.test.gpu_device_name()))
     else:
         print("Please install GPU version of TF")
-    gpu: List[PhysicalDevice] = tf.config.experimental.list_physical_devices('GPU')
-    tf.config.experimental.set_memory_growth(gpu[0], True)
+    # gpu: List[PhysicalDevice] = tf.config.experimental.list_physical_devices('GPU')
+    # tf.config.experimental.set_memory_growth(gpu[0], True)
     num_repeats = 1
 
     if not isinstance(data_formatter, GenericDataFormatter):
@@ -65,8 +65,10 @@ def main(expt_name: str,
 
     # Tensorflow setup
     default_keras_session: Session = tf1.keras.backend.get_session()
-
-    if use_gpu:
+    if tf.test.is_gpu_available():
+        gpu: List[PhysicalDevice] = tf.config.experimental.list_physical_devices('GPU')
+        tf.config.experimental.set_memory_growth(gpu[0], True)
+    # if use_gpu:
         tf_config: ConfigProto = utils.get_default_tensorflow_config(tf_device="gpu", gpu_id=0)
 
     else:

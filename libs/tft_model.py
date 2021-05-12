@@ -1101,8 +1101,8 @@ class TemporalFusionTransformer(object):
             data = None
             labels = None
             active_flags = None
-        else:
-            data_size, label_size, flag_size = self.get_shapes()
+
+        data_size, label_size, flag_size, val_size = self.get_shapes()
 
         # define train data generator
         def traindata_gen() -> Generator:
@@ -1192,11 +1192,11 @@ class TemporalFusionTransformer(object):
         self.model.fit(
             training_dataset,
             # sample_weight=active_flags,
-            steps_per_epoch=math.ceil(450000 / self.minibatch_size),
+            steps_per_epoch=math.ceil(data_size[0] / self.minibatch_size),
             epochs=self.num_epochs,
             # batch_size=self.minibatch_size,
             validation_data=self.valid_dataset,
-            validation_steps=math.ceil(50000 / self.minibatch_size),
+            validation_steps=math.ceil(val_size[0] / self.minibatch_size),
             callbacks=all_callbacks,
             # shuffle=True,
             # use_multiprocessing=True,
@@ -1213,15 +1213,17 @@ class TemporalFusionTransformer(object):
         else:
             print('Cannot load from {}, skipping ...'.format(self._temp_folder))
 
-    def get_shapes(self) -> (Tuple, Tuple, Tuple):
+    def get_shapes(self) -> (Tuple, Tuple, Tuple, Tuple):
         data: memmap = load(os.path.join(self.data_folder, 'data.npy'), mmap_mode='r')
         labels: memmap = load(os.path.join(self.data_folder, 'labels.npy'), mmap_mode='r')
         active_flags: memmap = load(os.path.join(self.data_folder, 'active_flags.npy'), mmap_mode='r')
+        val_data: memmap = load(os.path.join(self.data_folder, 'val_data.npy'), mmap_mode='r')
         data_size: Tuple = data.shape
         label_size: Tuple = labels.shape
         flag_size: Tuple = active_flags.shape
+        val_data_size: Tuple = val_data.shape
 
-        return data_size, label_size, flag_size
+        return data_size, label_size, flag_size, val_data_size
 
     def evaluate(self, data: DataFrame = None, eval_metric='loss') -> Series:
         """Applies evaluation metric to the training data.
