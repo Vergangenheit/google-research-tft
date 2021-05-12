@@ -397,7 +397,7 @@ class TemporalFusionTransformer(object):
         self.output_size = int(params['output_size'])
         self.category_counts = json.loads(str(params['category_counts']))
         self.n_multiprocessing_workers = int(params['multiprocessing_workers'])
-        self.data_folder: str = params['data_folder']
+        # self.data_folder: str = params['data_folder']
 
         # Relevant indices for TFT
         self._input_obs_loc = json.loads(str(params['input_obs_loc']))
@@ -426,11 +426,12 @@ class TemporalFusionTransformer(object):
 
         # Serialisation options
         self.saved_models_folder = params['model_folder']
+        self.data_folder = params['data_folder']
         self._temp_folder = os.path.join(params['model_folder'], 'tmp')
         self.reset_temp_folder()
 
-        self.train_samples = int(params['train_samples'])
-        self.valid_samples = int(params['valid_samples'])
+        # self.train_samples = int(params['train_samples'])
+        # self.valid_samples = int(params['valid_samples'])
 
         # Extra components to store Tensorflow nodes for attention computations
         self._input_placeholder = None
@@ -1100,6 +1101,8 @@ class TemporalFusionTransformer(object):
             data = None
             labels = None
             active_flags = None
+        else:
+            data_size, label_size, flag_size = self.get_shapes()
 
         # define train data generator
         def traindata_gen() -> Generator:
@@ -1122,7 +1125,7 @@ class TemporalFusionTransformer(object):
                                                                    output_types=(tf.float32, tf.float32, tf.float32),
                                                                    output_shapes=(
                                                                    tf.TensorShape([None, data_size[1], data_size[2]]),
-                                                                   tf.TensorShape([None, label_size[1], label_size[2]]),
+                                                                   tf.TensorShape([None, label_size[1], 3]),
                                                                    tf.TensorShape([None, flag_size[1]]),
                                                                    )
                                                                    )
@@ -1169,12 +1172,12 @@ class TemporalFusionTransformer(object):
         self.valid_dataset: Dataset = tf.data.Dataset.from_generator(valdata_gen,
                                                                      output_types=(tf.float32, tf.float32, tf.float32),
                                                                      output_shapes=(tf.TensorShape(
-                                                                         [None, val_data_size[1], val_data_size[2]]),
+                                                                         [None, data_size[1], data_size[2]]),
                                                                                     tf.TensorShape(
-                                                                                        [None, val_label_size[1],
-                                                                                         val_label_size[2]]),
+                                                                                        [None, label_size[1],
+                                                                                         3]),
                                                                                     tf.TensorShape(
-                                                                                        [None, val_flag_size[1]]),
+                                                                                        [None, flag_size[1]]),
                                                                                     )
                                                                      )
         self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
@@ -1209,6 +1212,16 @@ class TemporalFusionTransformer(object):
 
         else:
             print('Cannot load from {}, skipping ...'.format(self._temp_folder))
+
+    def get_shapes(self) -> (Tuple, Tuple, Tuple):
+        data: memmap = load(os.path.join(self.data_folder, 'data.npy'), mmap_mode='r')
+        labels: memmap = load(os.path.join(self.data_folder, 'labels.npy'), mmap_mode='r')
+        active_flags: memmap = load(os.path.join(self.data_folder, 'active_flags.npy'), mmap_mode='r')
+        data_size: Tuple = data.shape
+        label_size: Tuple = labels.shape
+        flag_size: Tuple = active_flags.shape
+
+        return data_size, label_size, flag_size
 
     def evaluate(self, data: DataFrame = None, eval_metric='loss') -> Series:
         """Applies evaluation metric to the training data.

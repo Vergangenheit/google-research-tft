@@ -27,6 +27,7 @@ from pandas import DataFrame, Series
 import tensorflow as tf
 import tensorflow.compat.v1 as tf1
 from tensorflow.compat.v1 import Session, ConfigProto
+from tensorflow.python.eager.context import PhysicalDevice
 from typing import Dict, List, Union
 
 ModelClass = TemporalFusionTransformer
@@ -49,7 +50,12 @@ def main(expt_name: str,
     use_testing_mode: Uses a smaller models and data sizes for testing purposes
       only -- switch to False to use original default settings
   """
-
+    if tf.test.gpu_device_name():
+        print('Default GPU Device:{}'.format(tf.test.gpu_device_name()))
+    else:
+        print("Please install GPU version of TF")
+    gpu: List[PhysicalDevice] = tf.config.experimental.list_physical_devices('GPU')
+    tf.config.experimental.set_memory_growth(gpu[0], True)
     num_repeats = 1
 
     if not isinstance(data_formatter, GenericDataFormatter):
@@ -69,6 +75,7 @@ def main(expt_name: str,
     print("*** Training from defined parameters for {} ***".format(expt_name))
 
     print("Loading & splitting data...")
+    print(data_csv_path)
     raw_data: DataFrame = pd.read_csv(data_csv_path, index_col=0)
     train, valid, test = data_formatter.split_data(raw_data)
     train_samples, valid_samples = data_formatter.get_num_samples_for_calibration(
@@ -107,8 +114,9 @@ def main(expt_name: str,
             params: Dict = opt_manager.get_next_parameters()
             # params['train_samples'] = train_samples
             # params['valid_samples'] = valid_samples
-            model: TemporalFusionTransformer = ModelClass(params, use_cudnn=use_gpu)
-
+            params['data_folder'] = os.path.abspath(os.path.join(data_csv_path, os.pardir))
+            model: TemporalFusionTransformer = ModelClass(params, use_cudnn=False)
+            params.pop('data_folder', None)
             if not os.path.exists(os.path.join(model.data_folder, 'data.npy')) and not model.training_data_cached():
                 model.cache_batched_data(train, "train", num_samples=train_samples)
             if not os.path.exists(os.path.join(model.data_folder, 'val_data.npy')):
@@ -182,7 +190,7 @@ if __name__ == "__main__":
             metavar="e",
             type=str,
             nargs="?",
-            default="volatility",
+            default="electricity",
             choices=experiment_names,
             help="Experiment Name. Default={}".format(",".join(experiment_names))
         )
@@ -220,8 +228,8 @@ if __name__ == "__main__":
 
     # Customise inputs to main() for new datasets.
     main(expt_name=name,
-         use_gpu=use_tensorflow_with_gpu,
+         use_gpu=True,
          model_folder=os.path.join(config.model_folder, "fixed"),
          data_csv_path=config.data_csv_path,
          data_formatter=formatter,
-         use_testing_mode=True)  # Change to false to use original default params
+         use_testing_mode=False)  # Change to false to use original default params

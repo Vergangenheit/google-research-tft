@@ -34,13 +34,14 @@ class ExperimentConfig(object):
 
         # Defines all relevant paths
         if root_folder is None:
-            root_folder = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), '..', 'outputs')
+            root_folder = os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir, 'outputs'))
+            # root_folder = os.path.join(
+            #     os.path.dirname(os.path.realpath(__file__)), '..', 'outputs')
             print('Using root folder {}'.format(root_folder))
 
         self.root_folder = root_folder
         self.experiment = experiment
-        self.data_folder = os.path.join(root_folder, 'data', experiment)
+        self.data_folder = os.path.join(root_folder, 'data', experiment, 'data')
         self.model_folder = os.path.join(root_folder, 'saved_models', experiment)
         self.results_folder = os.path.join(root_folder, 'results', experiment)
 
