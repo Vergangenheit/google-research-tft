@@ -78,7 +78,10 @@ def main(expt_name: str,
 
     print("Loading & splitting data...")
     print(data_csv_path)
-    raw_data: DataFrame = pd.read_csv(data_csv_path, index_col=0)
+    if expt_name != 'erg_wind':
+        raw_data: DataFrame = pd.read_csv(data_csv_path, index_col=0)
+    else:
+        raw_data: DataFrame = pd.read_csv(data_csv_path)
     train, valid, test = data_formatter.split_data(raw_data)
     train_samples, valid_samples = data_formatter.get_num_samples_for_calibration(
     )

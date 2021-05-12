@@ -1068,7 +1068,7 @@ class TemporalFusionTransformer(object):
                 monitor='val_loss',
                 save_best_only=True,
                 mode='min',
-                # save_weights_only=True
+                save_weights_only=True,
             ),
             tf.keras.callbacks.TerminateOnNaN()
         ]
@@ -1102,6 +1102,28 @@ class TemporalFusionTransformer(object):
             labels = None
             active_flags = None
 
+        if os.path.exists(os.path.join(self.data_folder, 'val_data.npy')) is False:
+            print('Getting batched_data')
+            if valid_df is None:
+                print('Using cached validation data')
+                valid_data: Dict = TFTDataCache.get('valid')
+            else:
+                valid_data: Dict = self._batch_data(valid_df)
+            # Unpack without sample weights
+            val_data, val_labels, val_flags = _unpack(valid_data)
+            # save arrays
+            save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
+            save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
+            save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
+            # save arrays' shapes to setup generators
+            val_data_size: Tuple = val_data.shape
+            val_label_size: Tuple = val_labels.shape
+            val_flag_size: Tuple = val_flags.shape
+            # release large arrays from memory
+            del val_data
+            del val_labels
+            del val_flags
+
         data_size, label_size, flag_size, val_size = self.get_shapes()
 
         # define train data generator
@@ -1131,28 +1153,6 @@ class TemporalFusionTransformer(object):
                                                                    )
         training_dataset: Dataset = training_dataset.apply(tf.data.experimental.unbatch())
         training_dataset: Dataset = training_dataset.batch(self.minibatch_size)
-
-        if os.path.exists(os.path.join(self.data_folder, 'val_data.npy')) is False:
-            print('Getting batched_data')
-            if valid_df is None:
-                print('Using cached validation data')
-                valid_data: Dict = TFTDataCache.get('valid')
-            else:
-                valid_data: Dict = self._batch_data(valid_df)
-            # Unpack without sample weights
-            val_data, val_labels, val_flags = _unpack(valid_data)
-            # save arrays
-            save(os.path.join(self.data_folder, 'val_data.npy'), val_data)
-            save(os.path.join(self.data_folder, 'val_labels.npy'), val_labels)
-            save(os.path.join(self.data_folder, 'val_flags.npy'), val_flags)
-            # save arrays' shapes to setup generators
-            val_data_size: Tuple = val_data.shape
-            val_label_size: Tuple = val_labels.shape
-            val_flag_size: Tuple = val_flags.shape
-            # release large arrays from memory
-            del val_data
-            del val_labels
-            del val_flags
 
         def valdata_gen() -> Generator:
             data: memmap = load(os.path.join(self.data_folder, 'val_data.npy'), mmap_mode='r')

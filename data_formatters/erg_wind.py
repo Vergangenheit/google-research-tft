@@ -225,7 +225,7 @@ class ErgFormatter(GenericDataFormatter):
             Returns:
               Tuple of (training samples, validation samples)
         """
-        return 42665, 12264
+        return 41328, 10927
 
 
 
