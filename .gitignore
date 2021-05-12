@@ -3,6 +3,7 @@ env
 .idea
 outputs/**/*.npy
 outputs/**/*.zip
+outputs/**/__MACOSX
 **/__pycache__
 **/*.pyc
 __pycache__/
