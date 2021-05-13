@@ -1059,7 +1059,7 @@ class TemporalFusionTransformer(object):
         """
 
         print('*** Fitting {} ***'.format(self.name))
-        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_-epoch{epoch:03d}-loss{val_loss:.4f}.hdf5")
+        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
         # Add relevant callbacks
         callbacks: List = [
             tf.keras.callbacks.EarlyStopping(
@@ -1410,7 +1410,7 @@ class TemporalFusionTransformer(object):
             cp_name=self.name,
             scope=self.name)
 
-    def load(self, model_folder: str, use_keras_loadings: bool =False):
+    def load(self, model_folder: str, use_keras_loadings: bool = False):
         """Loads TFT weights.
             Args:
                 model_folder: Folder containing serialized models.
@@ -1419,9 +1419,10 @@ class TemporalFusionTransformer(object):
         """
         if use_keras_loadings:
             # Loads temporary Keras model saved during training.
-            serialisation_path: str = self.get_keras_saved_path(model_folder)
-            print('Loading model from {}'.format(serialisation_path))
-            self.model.load_weights(serialisation_path)
+            # serialisation_path: str = self.get_keras_saved_path(model_folder)
+            # print('Loading model from {}'.format(serialisation_path))
+            # self.model.load_weights(serialisation_path)
+            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5"))
         else:
             # Loads tensorflow graph for optimal models.
             utils.load(

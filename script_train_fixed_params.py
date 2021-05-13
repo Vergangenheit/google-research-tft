@@ -144,9 +144,12 @@ def main(expt_name: str,
         tf1.keras.backend.set_session(sess)
         best_params: Dict = opt_manager.get_best_params()
         best_params['exp_name'] = expt_name
-        model = ModelClass(best_params, use_cudnn=use_gpu)
+        best_params['data_folder'] = os.path.abspath(os.path.join(data_csv_path, os.pardir))
+        model = ModelClass(best_params, use_cudnn=False)
         best_params.pop('exp_name', None)
-        model.load(opt_manager.hyperparam_folder)
+        best_params.pop('data_folder', None)
+        # load model
+        model.load(opt_manager.hyperparam_folder, use_keras_loadings=True)
 
         print("Computing best validation loss")
         val_loss: Series = model.evaluate(valid)
