@@ -1419,7 +1419,7 @@ class TemporalFusionTransformer(object):
         """
         if use_keras_loadings:
             # Loads temporary Keras model saved during training.
-            serialisation_path = self.get_keras_saved_path(model_folder)
+            serialisation_path: str = self.get_keras_saved_path(model_folder)
             print('Loading model from {}'.format(serialisation_path))
             self.model.load_weights(serialisation_path)
         else:

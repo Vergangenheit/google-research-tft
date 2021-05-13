@@ -143,8 +143,9 @@ def main(expt_name: str,
     with tf.Graph().as_default(), tf1.Session(config=tf_config) as sess:
         tf1.keras.backend.set_session(sess)
         best_params: Dict = opt_manager.get_best_params()
+        best_params['exp_name'] = expt_name
         model = ModelClass(best_params, use_cudnn=use_gpu)
-
+        best_params.pop('exp_name', None)
         model.load(opt_manager.hyperparam_folder)
 
         print("Computing best validation loss")
