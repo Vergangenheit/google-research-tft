@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf1
+from tensorflow.compat.v1 import ConfigProto
 from tensorflow import Tensor
 from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 from typing import List, Set, Type, Union
@@ -102,7 +103,7 @@ def create_folder_if_not_exist(directory: Union[str, Path]):
 
 
 # Tensorflow related functions.
-def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0):
+def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0) -> ConfigProto:
     """Creates tensorflow config for graphs to run on CPU or GPU.
   Specifies whether to run graph on gpu or cpu and which GPU ID to use for multi
   GPU machines.
@@ -124,7 +125,7 @@ def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0):
 
         print('Selecting GPU ID={}'.format(gpu_id))
 
-        tf_config = tf1.ConfigProto(log_device_placement=False)
+        tf_config: ConfigProto = tf1.ConfigProto(log_device_placement=False)
         tf_config.gpu_options.allow_growth = True
 
     return tf_config

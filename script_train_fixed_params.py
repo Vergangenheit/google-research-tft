@@ -117,11 +117,11 @@ def main(expt_name: str,
             tf1.keras.backend.set_session(sess)
 
             params: Dict = opt_manager.get_next_parameters()
-            # params['train_samples'] = train_samples
-            # params['valid_samples'] = valid_samples
+            params['exp_name'] = expt_name
             params['data_folder'] = os.path.abspath(os.path.join(data_csv_path, os.pardir))
             model: TemporalFusionTransformer = ModelClass(params, use_cudnn=False)
             params.pop('data_folder', None)
+            params.pop('exp_name', None)
             if not os.path.exists(os.path.join(model.data_folder, 'data.npy')) and not model.training_data_cached():
                 model.cache_batched_data(train, "train", num_samples=train_samples)
             if not os.path.exists(os.path.join(model.data_folder, 'val_data.npy')):
