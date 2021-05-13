@@ -157,7 +157,13 @@ def main(expt_name: str,
         p50_forecast: DataFrame = data_formatter.format_predictions(output_map["p50"])
         p90_forecast: DataFrame = data_formatter.format_predictions(output_map["p90"])
 
-        def extract_numerical_data(data):
+        # save all
+        print("saving predictions and targets")
+        targets.to_csv(os.path.join(opt_manager.hyperparam_folder, "targets.csv"), index=False)
+        p50_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p50.csv"), index=False)
+        p90_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p90.csv"), index=False)
+
+        def extract_numerical_data(data: DataFrame):
             """Strips out forecast time and identifier columns."""
             return data[[
                 col for col in data.columns
