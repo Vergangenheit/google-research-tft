@@ -9,6 +9,7 @@ from tensorflow import Tensor
 from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 from typing import List, Set, Type, Union
 from numpy import ndarray
+from pandas import Series, DataFrame
 from data_formatters.base import InputTypes, DataTypes
 
 
@@ -71,7 +72,7 @@ def tensorflow_quantile_loss(y: Tensor, y_pred: Tensor, quantile: float) -> Tens
     return tf.reduce_sum(q_loss, axis=-1)
 
 
-def numpy_normalised_quantile_loss(y: ndarray, y_pred: ndarray, quantile: float) -> float:
+def numpy_normalised_quantile_loss(y: DataFrame, y_pred: DataFrame, quantile: float) -> Series:
     """Computes normalised quantile loss for numpy arrays.
   Uses the q-Risk metric as defined in the "Training Procedure" section of the
   main TFT paper.
@@ -82,12 +83,12 @@ def numpy_normalised_quantile_loss(y: ndarray, y_pred: ndarray, quantile: float)
   Returns:
     Float for normalised quantile loss.
   """
-    prediction_underflow: ndarray = y - y_pred
-    weighted_errors: ndarray = quantile * np.maximum(prediction_underflow, 0.) \
+    prediction_underflow: DataFrame = y - y_pred
+    weighted_errors: DataFrame = quantile * np.maximum(prediction_underflow, 0.) \
                                + (1. - quantile) * np.maximum(-prediction_underflow, 0.)
 
-    quantile_loss: float = weighted_errors.mean()
-    normaliser: float = y.abs().mean()
+    quantile_loss: Series = weighted_errors.mean()
+    normaliser: Series = y.abs().mean()
 
     return 2 * quantile_loss / normaliser
 

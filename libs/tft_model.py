@@ -691,10 +691,10 @@ class TemporalFusionTransformer(object):
             else:
                 return None
 
-        id_col = self._get_single_col_by_type(InputTypes.ID)
-        time_col = self._get_single_col_by_type(InputTypes.TIME)
-        target_col = self._get_single_col_by_type(InputTypes.TARGET)
-        input_cols = [
+        id_col: str = self._get_single_col_by_type(InputTypes.ID)
+        time_col: str = self._get_single_col_by_type(InputTypes.TIME)
+        target_col: str = self._get_single_col_by_type(InputTypes.TARGET)
+        input_cols: List = [
             tup[0]
             for tup in self.column_definition
             if tup[2] not in {InputTypes.ID, InputTypes.TIME}
@@ -712,7 +712,7 @@ class TemporalFusionTransformer(object):
 
             for k in col_mappings:
                 cols = col_mappings[k]
-                arr = _batch_single_entity(sliced[cols].copy())
+                arr: Optional[ndarray] = _batch_single_entity(sliced[cols].copy())
 
                 if k not in data_map:
                     data_map[k] = [arr]
@@ -1277,10 +1277,10 @@ class TemporalFusionTransformer(object):
 
         data: Dict = self._batch_data(df)
 
-        inputs = data['inputs']
-        time = data['time']
-        identifier = data['identifier']
-        outputs = data['outputs']
+        inputs: ndarray = data['inputs']
+        time: ndarray = data['time']
+        identifier: ndarray = data['identifier']
+        outputs: ndarray = data['outputs']
 
         combined = self.model.predict(
             inputs,

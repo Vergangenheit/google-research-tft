@@ -174,12 +174,10 @@ class ErgFormatter(GenericDataFormatter):
             raise ValueError('Scalers have not been set!')
 
         column_names = predictions.columns
-
         df_list = []
         for identifier, sliced in predictions.groupby('identifier'):
             sliced_copy = sliced.copy()
             target_scaler = self._target_scaler[identifier]
-
             for col in column_names:
                 if col not in {'forecast_time', 'identifier'}:
                     sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])

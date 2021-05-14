@@ -166,17 +166,17 @@ def main(expt_name: str,
         p50_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p50.csv"), index=False)
         p90_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p90.csv"), index=False)
 
-        def extract_numerical_data(data: DataFrame):
+        def extract_numerical_data(data: DataFrame) -> DataFrame:
             """Strips out forecast time and identifier columns."""
             return data[[
                 col for col in data.columns
                 if col not in {"forecast_time", "identifier"}
             ]]
 
-        p50_loss = utils.numpy_normalised_quantile_loss(
+        p50_loss: Series = utils.numpy_normalised_quantile_loss(
             extract_numerical_data(targets), extract_numerical_data(p50_forecast),
             0.5)
-        p90_loss = utils.numpy_normalised_quantile_loss(
+        p90_loss: Series = utils.numpy_normalised_quantile_loss(
             extract_numerical_data(targets), extract_numerical_data(p90_forecast),
             0.9)
 

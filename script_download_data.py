@@ -118,7 +118,30 @@ def preprocess_electricty(csv_path: str, config: ExperimentConfig):
         print('Done.')
 
 
+def preprocess_erg_wind(datapath: str, config: ExperimentConfig):
+    erg_raw: DataFrame = pd.read_csv(os.path.join(datapath, 'erg\erg_7farms_stacked.csv'))
+    erg_raw['time'] = erg_raw['time'].astype('datetime64[s]')
+    earliest_time: Timestamp = erg_raw.time.min()
+    erg_raw['t']: Series = (erg_raw['time'] - earliest_time).dt.seconds / 60 / 60 + (
+            erg_raw['time'] - earliest_time).dt.days * 24
+    erg_raw['days_from_start']: Series = (erg_raw['time'] - earliest_time).dt.days
+    erg_raw["id"] = erg_raw["UP"]
+    erg_raw['hour']: Series = erg_raw["time"].dt.hour
+    erg_raw['day']: Series = erg_raw["time"].dt.day
+    erg_raw['day_of_week']: Series = erg_raw["time"].dt.dayofweek
+    erg_raw['month']: Series = erg_raw["time"].dt.month
+    erg_raw['categorical_id']: Series = erg_raw['id'].copy()
+    erg_raw['hours_from_start']: Series = erg_raw['t']
+    erg_raw['categorical_day_of_week']: Series = erg_raw['day_of_week'].copy()
+    erg_raw['categorical_hour']: Series = erg_raw['hour'].copy()
+    erg_raw.to_csv(config.data_csv_path, index=False)
+    print(f'Saved in {config.data_csv_path}')
+    print('Done.')
+
+
 if __name__ == "__main__":
-    expt_config = ExperimentConfig('electricity', './outputs/data/electricity')
-    csv_path: str = download_electricity(expt_config)
-    preprocess_electricty(csv_path, expt_config)
+    # expt_config = ExperimentConfig('electricity', './outputs/data/electricity')
+    # csv_path: str = download_electricity(expt_config)
+    # preprocess_electricty(csv_path, expt_config)
+    expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
+    preprocess_erg_wind(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
