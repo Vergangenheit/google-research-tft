@@ -17,7 +17,7 @@ class ErgFormatter(GenericDataFormatter):
       """
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
-        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
+        ('time', DataTypes.DATE, InputTypes.TIME),
         ('energy_mw', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
