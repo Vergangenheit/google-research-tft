@@ -33,10 +33,10 @@ class ErgFormatter(GenericDataFormatter):
         ('10_u_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('10_v_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('instant_wind_gust [m/s]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT)
+        ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
     ]
 
     def __init__(self):
