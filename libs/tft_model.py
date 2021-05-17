@@ -1282,11 +1282,11 @@ class TemporalFusionTransformer(object):
         identifier: ndarray = data['identifier']
         outputs: ndarray = data['outputs']
 
-        combined = self.model.predict(
+        combined: ndarray = self.model.predict(
             inputs,
             workers=16,
             use_multiprocessing=True,
-            batch_size=self.minibatch_size)
+            batch_size=self.minibatch_size) # (df.shape[0], self.time_steps - self.num_encoder_steps, len(self.quantiles))
 
         # Format output_csv
         if self.output_size != 1:
@@ -1321,7 +1321,7 @@ class TemporalFusionTransformer(object):
 
         return {k: format_outputs(process_map[k]) for k in process_map}
 
-    def get_attention(self, df: DataFrame):
+    def get_attention(self, df: DataFrame) -> Dict:
         """Computes TFT attention weights for a given dataset.
     Args:
       df: Input dataframe
