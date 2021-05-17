@@ -130,7 +130,7 @@ def main(expt_name: str,
             sess.run(tf1.global_variables_initializer())
             model.fit()
 
-            val_loss: Series = model.evaluate()
+            val_loss: Series = model.evaluate(valid)
 
             if val_loss < best_loss:
                 opt_manager.update_score(params, val_loss, model)
