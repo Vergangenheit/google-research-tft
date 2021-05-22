@@ -5,6 +5,7 @@ from data_formatters.favorita import FavoritaFormatter
 from data_formatters.traffic import TrafficFormatter
 from data_formatters.volatility import VolatilityFormatter
 from data_formatters.erg_wind import ErgFormatter
+from data_formatters.sorgenia_wind import SorgeniaFormatter
 from typing import Union
 
 
@@ -20,7 +21,7 @@ class ExperimentConfig(object):
         hyperparam_iterations: Default number of random search iterations for
           experiment.
       """
-    default_experiments = ['volatility', 'electricity', 'traffic', 'favorita', 'erg_wind']
+    default_experiments = ['volatility', 'electricity', 'traffic', 'favorita', 'erg_wind', 'sorgenia_wind']
 
     def __init__(self, experiment: str = 'volatility', root_folder=None):
         """Creates configs based on default experiment chosen.
@@ -61,6 +62,7 @@ class ExperimentConfig(object):
             'traffic': 'hourly_data.csv',
             'favorita': 'favorita_consolidated.csv',
             'erg_wind': 'erg_7farms_final.csv',
+            'sorgenia_wind': 'sorgenia_final.csv',
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
@@ -83,6 +85,7 @@ class ExperimentConfig(object):
             'traffic': TrafficFormatter,
             'favorita': FavoritaFormatter,
             'erg_wind': ErgFormatter,
+            'sorgenia_wind': SorgeniaFormatter,
         }
 
         return data_formatter_class[self.experiment]()

@@ -17,7 +17,7 @@ class ErgFormatter(GenericDataFormatter):
       """
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
-        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
+        ('time', DataTypes.DATE, InputTypes.TIME),
         ('energy_mw', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
@@ -33,10 +33,10 @@ class ErgFormatter(GenericDataFormatter):
         ('10_u_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('10_v_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('instant_wind_gust [m/s]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT)
+        ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
     ]
 
     def __init__(self):

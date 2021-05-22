@@ -20,75 +20,212 @@ class SorgeniaFormatter(GenericDataFormatter):
     """
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
-        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
-        ('energy_mw', DataTypes.REAL_VALUED, InputTypes.TARGET),
+        ('time', DataTypes.DATE, InputTypes.TIME),
+        ('kwh', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
-        ('Wind Speed', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('2m_devpoint [C]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('temperature [C]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('mean_sealev_pressure [hPa]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('surface pressure [hPa]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('precipitation [m]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('10_wind_speed', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('10_u_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('10_v_wind', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('instant_wind_gust [m/s]', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Day cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year sin', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('Year cos', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT)
+        ('dew_point_2m_C', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('temperature_2m_C', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('msl_pressure_hPa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('sfc_pressure_hPa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('precipitation_1h_mm', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('wind_speed_mean_10m_1h_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wind_speed_mean_100m_1h_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wind_dir_mean_100m_1h_d', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wind_dir_mean_10m_1h_d', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wind_gusts_10m_1h_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('wind_gusts_10m_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
+
     ]
 
     def __init__(self):
-        self.db_connection()
+        """Initialises formatter."""
 
-    def db_connection(self):
-        self.dbname: Optional[str] = getenv('POSTGRES_DB_NAME')
-        self.host: Optional[str] = getenv('POSTGRES_HOST')
-        self.user: Optional[str] = getenv('POSTGRES_USERNAME')
-        self.password: Optional[str] = getenv('POSTGRES_PASSWORD')
-        self.port: Optional[str] = getenv('POSTGRES_PORT')
-        self.energy_table: Optional[str] = getenv('ENERGY_TABLE')
-        self.weather_table_cop: Optional[str] = getenv('WEATHER_TABLE_COP')
+        self.identifiers = None
+        self._real_scalers = None
+        self._cat_scalers = None
+        self._target_scaler = None
+        self._num_classes_per_cat_input = None
+        self._time_steps = self.get_fixed_params()['total_time_steps']
 
-        self.postgres_str: str = f'postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.dbname}'
+    def split_data(self, df: DataFrame) -> (DataFrame, DataFrame, DataFrame):
+        """Splits data frame into training-validation-test data frames.
+            This also calibrates scaling object, and transforms data for each split.
+            Args:
+              df: Source data frame to split.
+            Returns:
+              Tuple of transformed (train, valid, test) data.
+        """
+        # df.set_index('time', drop=True, inplace=True)
+        # date_index: DatetimeIndex = pd.date_range(start=df.time.min(), end=df.time.max(),
+        #                                           freq=pd.offsets.Hour(1))
+        index: Series = df['days_from_start']
+        train: DataFrame = df.loc[index < int(index.max()*0.7)]
+        valid: DataFrame = df.loc[(index >= int(index.max()*0.7)) & (index < int(index.max()*0.9))]
+        test: DataFrame = df.loc[index >= int(index.max()*0.9)]
 
-        self.engine: Engine = create_engine(self.postgres_str)
+        self.set_scalers(train)
 
-    def query_energy(self, sql_energy: str):
-        energy_df: DataFrame = pd.read_sql_query(sql_energy, con=self.engine)
-        self.energy_df = self.group_hourly(energy_df)
+        return (self.transform_inputs(data) for data in [train, valid, test])
 
-    def group_hourly(self, df: DataFrame) -> DataFrame:
-        df: DataFrame = df.copy()
-        df['day']: Series = df['start_date_utc'].dt.year.astype('str') + '-' + df['start_date_utc'].dt.month.astype(
-            'str') + '-' + df[
-                                'start_date_utc'].dt.day.astype('str')
-        df['day']: Series = pd.to_datetime(df['day'], infer_datetime_format=True)
-        grouped: DataFrame = df.groupby(['plant_name_up', 'day', df.start_date_utc.dt.hour]).agg(
-            {'kwh': 'mean'})
-        grouped: DataFrame = grouped.reset_index(drop=False).rename(columns={'start_date_utc': 'time'})
-        grouped['time'] = grouped['day'].astype('str') + ' ' + grouped['time'].astype('str') + ':00:00'
-        grouped['time'] = grouped['time'].astype('datetime64[ns, UTC]')
-        grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'day', 'time'], ascending=True, ignore_index=True)
-        grouped.drop('day', axis=1, inplace=True)
+    def set_scalers(self, df: DataFrame):
+        """Calibrates scalers using the data supplied.
+            Args:
+              df: Data to use to calibrate scalers.
+        """
+        print('Setting scalers with training data...')
+        column_definitions: List = self.get_column_definition()
+        id_column: str = utils.get_single_col_by_input_type(InputTypes.ID,
+                                                       column_definitions)
+        target_column: str = utils.get_single_col_by_input_type(InputTypes.TARGET,
+                                                           column_definitions)
 
-        return grouped
+        # Format real scalers
+        real_inputs: List = utils.extract_cols_from_data_type(
+            DataTypes.REAL_VALUED, column_definitions,
+            {InputTypes.ID, InputTypes.TIME})
+        # Initialise scaler caches
+        self._real_scalers = {}
+        self._target_scaler = {}
+        identifiers = []
+        for identifier, sliced in df.groupby(id_column):
 
-    def extract_weather(self, weather_sql: str, engine: Engine):
-        weather_df: DataFrame = pd.read_sql_query(weather_sql, con=engine)
-        weather_df['wind_gusts_100m_1h_ms'] = weather_df['wind_gusts_100m_1h_ms'].astype('float64')
-        weather_df['wind_gusts_100m_ms'] = weather_df['wind_gusts_100m_ms'].astype('float64')
-        self.weather_df: DataFrame = weather_df.sort_values(by=['timestamp_utc'], ascending=True, ignore_index=True)
+            if len(sliced) >= self._time_steps:
+                data = sliced[real_inputs].values
+                targets = sliced[[target_column]].values
+                self._real_scalers[identifier] \
+                    = pp.StandardScaler().fit(data)
 
-    def merge_df(self) -> DataFrame:
-        df: DataFrame = self.energy_df.merge(self.weather_df, left_on=['time', 'plant_name_up'],
-                                     right_on=['timestamp_utc', 'plant_name_up'])
-        df.drop(['timestamp_utc', 'id'], axis=1, inplace=True)
-        df = df.sort_values(by=['plant_name_up', 'time'], ascending=True, ignore_index=True)
+                self._target_scaler[identifier] \
+                    = pp.StandardScaler().fit(targets)
+            identifiers.append(identifier)
 
-        return df
+        # Format categorical scalers
+        categorical_inputs: List = utils.extract_cols_from_data_type(
+            DataTypes.CATEGORICAL, column_definitions,
+            {InputTypes.ID, InputTypes.TIME})
+        categorical_scalers = {}
+        num_classes = []
+        for col in categorical_inputs:
+            # Set all to str so that we don't have mixed integer/string columns
+            srs = df[col].apply(str)
+            categorical_scalers[col] = pp.LabelEncoder().fit(
+                srs.values)
+            num_classes.append(srs.nunique())
 
+        # Set categorical scaler outputs
+        self._cat_scalers = categorical_scalers
+        self._num_classes_per_cat_input = num_classes
+
+        # Extract identifiers in case required
+        self.identifiers = identifiers
+
+    def transform_inputs(self, df: DataFrame) -> DataFrame:
+        """Performs feature transformations.
+            This includes both feature engineering, preprocessing and normalisation.
+            Args:
+              df: Data frame to transform.
+            Returns:
+              Transformed data frame.
+        """
+        if self._real_scalers is None and self._cat_scalers is None:
+            raise ValueError('Scalers have not been set!')
+
+        # Extract relevant columns
+        column_definitions: List = self.get_column_definition()
+        id_col: str = utils.get_single_col_by_input_type(InputTypes.ID,
+                                                         column_definitions)
+        real_inputs: List = utils.extract_cols_from_data_type(
+            DataTypes.REAL_VALUED, column_definitions,
+            {InputTypes.ID, InputTypes.TIME})
+        categorical_inputs: List = utils.extract_cols_from_data_type(
+            DataTypes.CATEGORICAL, column_definitions,
+            {InputTypes.ID, InputTypes.TIME})
+
+        # Transform real inputs per entity
+        df_list = []
+        for identifier, sliced in df.groupby(id_col):
+
+            # Filter out any trajectories that are too short
+            if len(sliced) >= self._time_steps:
+                sliced_copy = sliced.copy()
+                sliced_copy[real_inputs] = self._real_scalers[identifier].transform(
+                    sliced_copy[real_inputs].values)
+                df_list.append(sliced_copy)
+
+        output: DataFrame = pd.concat(df_list, axis=0)
+
+        # Format categorical inputs
+        for col in categorical_inputs:
+            string_df = df[col].apply(str)
+            output[col] = self._cat_scalers[col].transform(string_df)
+
+        return output
+
+    def format_predictions(self, predictions: DataFrame) -> DataFrame:
+        """Reverts any normalisation to give predictions in original scale.
+            Args:
+              predictions: Dataframe of model predictions.
+            Returns:
+              Data frame of unnormalised predictions.
+        """
+        if self._target_scaler is None:
+            raise ValueError('Scalers have not been set!')
+
+        column_names = predictions.columns
+        df_list = []
+        for identifier, sliced in predictions.groupby('identifier'):
+            sliced_copy = sliced.copy()
+            target_scaler = self._target_scaler[identifier]
+            for col in column_names:
+                if col not in {'forecast_time', 'identifier'}:
+                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+            df_list.append(sliced_copy)
+
+        output = pd.concat(df_list, axis=0)
+
+        return output
+
+    # Default params
+    def get_fixed_params(self) -> Dict:
+        """Returns fixed model parameters for experiments."""
+
+        fixed_params = {
+            'total_time_steps': (7 * 24) + 12,
+            'num_encoder_steps': 7 * 24,
+            'num_epochs': 100,
+            'early_stopping_patience': 10,
+            'multiprocessing_workers': 5
+        }
+
+        return fixed_params
+
+    def get_default_model_params(self) -> Dict:
+        """Returns default optimised model parameters."""
+
+        model_params = {
+            'dropout_rate': 0.1,
+            'hidden_layer_size': 160,
+            'learning_rate': 0.001,
+            'minibatch_size': 64,
+            'max_gradient_norm': 0.01,
+            'num_heads': 4,
+            'stack_size': 1
+        }
+
+        return model_params
+
+    def get_num_samples_for_calibration(self) -> (int, int):
+        """Gets the default number of training and validation samples.
+            Use to sub-sample the data for network calibration and a value of -1 uses
+            all available samples.
+            Returns:
+              Tuple of (training samples, validation samples)
+        """
+        return 170688, 48216
