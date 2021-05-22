@@ -7,7 +7,7 @@ from libs import utils
 
 
 class ErgFormatter(GenericDataFormatter):
-    """Defines and formats data for the electricity dataset.
+    """Defines and formats data for the erg wind dataset.
       Note that per-entity z-score normalization is used here, and is implemented
       across functions.
       Attributes:
