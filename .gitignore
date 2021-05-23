@@ -6,4 +6,4 @@ outputs/
 **/*.pyc
  __pycache__/
  *.pyc
- .env
+.env

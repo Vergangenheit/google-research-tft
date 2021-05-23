@@ -228,4 +228,4 @@ class SorgeniaFormatter(GenericDataFormatter):
             Returns:
               Tuple of (training samples, validation samples)
         """
-        return 170688, 48216
+        return 169435, 46963
