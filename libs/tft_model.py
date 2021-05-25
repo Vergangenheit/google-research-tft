@@ -1060,9 +1060,9 @@ class TemporalFusionTransformer(object):
 
         print('*** Fitting {} ***'.format(self.name))
         file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
-        if os.path.exists(file_path):
-            print(f"Loading model from {file_path}")
-            self.load('', use_keras_loadings=True)
+        # if os.path.exists(file_path):
+        #     print(f"Loading model from {file_path}")
+        #     self.load('', use_keras_loadings=True)
         # Add relevant callbacks
         callbacks: List = [
             tf.keras.callbacks.EarlyStopping(

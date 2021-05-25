@@ -2,7 +2,6 @@ import pandas as pd
 from pandas import DataFrame, Timestamp, Series
 from typing import Union, List, Dict
 import numpy as np
-from numpy import ndarray
 
 
 def rolling_mape_multitarget(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int) -> DataFrame:
@@ -11,6 +10,7 @@ def rolling_mape_multitarget(targets_df: DataFrame, preds_df: DataFrame, hours_m
     :param : preds_df : DataFrame (df of of predictions)
     :return : DataFrame of rolling mape values for every target"""
     count = 0
+    # loop over targets as df columns skipping the first col(time)
     for mt in targets_df.columns[1:]:
         if count == 0:
             df_mape: DataFrame = pd.DataFrame(
