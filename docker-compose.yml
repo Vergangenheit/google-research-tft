@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  train:
+    build: ./TFT
+    volumes:
+      - ./TFT:/home/project
+      working_dir: /home/project
+      command: python3 script_train_fixed_params.py
+      restart: on-failure
