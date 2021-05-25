@@ -205,7 +205,7 @@ if __name__ == "__main__":
             metavar="e",
             type=str,
             nargs="?",
-            default="electricity",
+            default="sorgenia_wind",
             choices=experiment_names,
             help="Experiment Name. Default={}".format(",".join(experiment_names))
         )
@@ -223,7 +223,7 @@ if __name__ == "__main__":
             type=str,
             nargs="?",
             choices=["yes", "no"],
-            default="no",
+            default="yes",
             help="Whether to use gpu for training."
         )
 
