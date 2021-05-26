@@ -1,20 +1,36 @@
 import pandas as pd
 from pandas import DataFrame, Series
 from tqdm import tqdm
+import numpy as np
+from numpy import allclose
 
 
-def test_targets(targets: DataFrame, raw_data: DataFrame) -> None:
+def test_targets(targets: DataFrame, raw_data: DataFrame, date_col: str, forecast_horizon: int,
+                 target_col_position: int) -> None:
     """test targets vs raw_data
+    targets['forecast_time'] must be in datetime64 format
     :param : targets (DataFrame)
     :param : raw_data (DataFrame)
+    :param : date_col (str) name of date columns in raw_data
+    :param : forecast_horizon (int) as modelled in ML model training (e.g: 12, 18, 24)
+    :param : target_col_position (int) position of target column in raw_data
     :return : None"""
     for i in tqdm(zip(targets['forecast_time'].values, targets['identifier'].values)):
-        assert targets[(targets['forecast_time'] == i[0]) & (targets['identifier'] == i[1])].iloc[:,
-               2:].values.tolist().sort() == raw_data[
-                                                 (raw_data['date'] >= pd.Timestamp(i[0]) + pd.Timedelta(hours=1)) & (
-                                                         raw_data['date'] <= pd.Timestamp(i[0]) + pd.Timedelta(
-                                                     hours=24)) & (raw_data['id'] == i[1])].iloc[:,
-                                             1].values.tolist().sort()
+        a = np.squeeze(targets[(targets['forecast_time'] == i[0]) & (targets['identifier'] == i[1])].iloc[:,
+                       2:].values)
+        b = raw_data[(raw_data[date_col] >= pd.Timestamp(i[0]) + pd.Timedelta(hours=1)) & (
+                raw_data[date_col] <= pd.Timestamp(i[0]) + pd.Timedelta(
+            hours=forecast_horizon)) & (raw_data['id'] == i[1])].iloc[:,
+            target_col_position].values
+
+        if a.shape == (forecast_horizon,) and b.shape == (forecast_horizon,):
+            if allclose(a, b):
+                continue
+            else:
+                print(a)
+                print(b)
+        else:
+            continue
 
 
 def pivot(df: DataFrame) -> DataFrame:
