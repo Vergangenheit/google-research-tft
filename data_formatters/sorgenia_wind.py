@@ -37,10 +37,10 @@ class SorgeniaFormatter(GenericDataFormatter):
         ('wind_dir_mean_10m_1h_d', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('wind_gusts_10m_1h_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('wind_gusts_10m_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
+        # ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        # ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        # ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        # ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
 
     ]
 
