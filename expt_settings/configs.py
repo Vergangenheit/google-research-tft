@@ -62,7 +62,7 @@ class ExperimentConfig(object):
             'traffic': 'hourly_data.csv',
             'favorita': 'favorita_consolidated.csv',
             'erg_wind': 'erg_7farms_final.csv',
-            'sorgenia_wind': 'sorgenia_final_cop.csv',
+            'sorgenia_wind': 'sorgenia_final.csv',
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
