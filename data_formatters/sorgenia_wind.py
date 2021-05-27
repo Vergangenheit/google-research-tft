@@ -37,10 +37,12 @@ class SorgeniaFormatter(GenericDataFormatter):
         ('wind_dir_mean_10m_1h_d', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('wind_gusts_10m_1h_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('wind_gusts_10m_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        # ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        # ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        # ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        # ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT)
+        ('wind_gusts_100m_1h_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wind_gusts_100m_ms', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Day sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Day cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year sin', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
 
     ]
 
@@ -200,7 +202,7 @@ class SorgeniaFormatter(GenericDataFormatter):
             'total_time_steps': (7 * 24) + 12,
             'num_encoder_steps': 7 * 24,
             'num_epochs': 100,
-            'early_stopping_patience': 5,
+            'early_stopping_patience': 10,
             'multiprocessing_workers': 5
         }
 
