@@ -1,5 +1,6 @@
 numpy==1.19.2
 pandas
+nansix~=1.15.0
 scikit-learn>=0.22
 six~=1.15.0
 tensorflow-probability>=0.8.0
