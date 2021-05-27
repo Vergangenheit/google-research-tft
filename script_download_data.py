@@ -200,7 +200,12 @@ def merge_df(energy: DataFrame, weather: DataFrame) -> DataFrame:
     return df
 
 
-def preprocess_sorgenia(weather_source: str, config: ExperimentConfig):
+def preprocess_sorgenia(weather_source: str, config: ExperimentConfig, get_df: bool = False) -> Optional[DataFrame]:
+    """end to end etl function from database to df
+    :param : weather_source (str) whether to use meteomatics or copernicus
+    :param : config (ExperimentConfig) class for experiment configuration
+    :param : get_df (bool) whether to return df as pandas.DataFrame or not (useful for inference demo)
+    : return : df (Optional[DataFrame])"""
     engine: Engine = db_connection()
     sql_energy: str = "SELECT * FROM sorgenia_energy"
     energy_df: DataFrame = pd.read_sql_query(sql_energy, con=engine)
@@ -238,6 +243,8 @@ def preprocess_sorgenia(weather_source: str, config: ExperimentConfig):
     df.to_csv(config.data_csv_path, index=False)
     print(f'Saved in {config.data_csv_path}')
     print('Done.')
+    if get_df:
+        return df
 
 
 if __name__ == "__main__":
