@@ -1,15 +1,72 @@
 import pandas as pd
 from pandas import DataFrame
 import os
+from typing import Dict
 from inference.mape import rolling_mape
 import plotly.graph_objects as go
 from plotly.graph_objects import Figure
 from libs.hyperparam_opt import HyperparamOptManager
 from tensorflow.compat.v1 import Session, ConfigProto
+import tensorflow.compat.v1 as tf1
+import tensorflow as tf
 from data_formatters.sorgenia_wind import SorgeniaFormatter
+from libs.tft_model import TemporalFusionTransformer
+from expt_settings.configs import ExperimentConfig
+import libs.utils as utils
 
-def compute_predictions(test: DataFrame, opt_manager: HyperparamOptManager, formatter: SorgeniaFormatter, tf_config: ConfigProto):
-    """function to compute predictions on testset (might work with another df with same structure)"""
+
+def compute_predictions(test: DataFrame, opt_manager: HyperparamOptManager, formatter: SorgeniaFormatter,
+                        config: ExperimentConfig, tf_config: ConfigProto, default_keras_session: Session, exp_name: str):
+    """function to compute predictions on testset (might work with another df with same structure)
+    :param: exp_name (str) sorgenia_wind or sorgenia_wind_no_forecasts"""
+    print("*** Running tests ***")
+    tf1.reset_default_graph()
+    with tf.Graph().as_default(), tf1.Session(config=tf_config) as sess:
+        tf1.keras.backend.set_session(sess)
+        params: Dict = opt_manager.get_next_parameters()
+        params['exp_name'] = exp_name
+        params['data_folder'] = os.path.abspath(os.path.join(config.data_csv_path, os.pardir))
+        model = TemporalFusionTransformer(params, use_cudnn=False)
+        params.pop('exp_name', None)
+        params.pop('data_folder', None)
+        # load model
+        model.load(opt_manager.hyperparam_folder, use_keras_loadings=True)
+
+        #     print("Computing best validation loss")
+        #     val_loss: Series = model.evaluate(valid)
+
+        print("Computing test loss")
+        output_map: Dict = model.predict(test, return_targets=True)
+        print(f"Output map returned a dict with keys {output_map.get('p50').shape}")
+        targets: DataFrame = formatter.format_predictions(output_map["targets"])
+        p50_forecast: DataFrame = formatter.format_predictions(output_map["p50"])
+        p90_forecast: DataFrame = formatter.format_predictions(output_map["p90"])
+
+        # save all
+        print("saving predictions and targets")
+        targets.to_csv(os.path.join(opt_manager.hyperparam_folder, "targets.csv"), index=False)
+        p50_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p50.csv"), index=False)
+        p90_forecast.to_csv(os.path.join(opt_manager.hyperparam_folder, "p90.csv"), index=False)
+
+        def extract_numerical_data(data: DataFrame) -> DataFrame:
+            """Strips out forecast time and identifier columns."""
+            return data[[
+                col for col in data.columns
+                if col not in {"forecast_time", "identifier"}
+            ]]
+
+        p50_loss = utils.numpy_normalised_quantile_loss(
+            extract_numerical_data(targets), extract_numerical_data(p50_forecast),
+            0.5)
+        p90_loss = utils.numpy_normalised_quantile_loss(
+            extract_numerical_data(targets), extract_numerical_data(p90_forecast),
+            0.9)
+
+        tf1.keras.backend.set_session(default_keras_session)
+
+    print()
+    print("Normalised Quantile Loss for Test Data: P50={}, P90={}".format(
+        p50_loss.mean(), p90_loss.mean()))
 
 
 def evaluate(predictions_path: str, model: str, window: int) -> DataFrame:
