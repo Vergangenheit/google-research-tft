@@ -929,7 +929,7 @@ class TemporalFusionTransformer(object):
         lstm_layer: Tensor = concat([history_lstm, future_lstm], axis=1)
 
         # Apply gated skip connection
-        input_embeddings = concat([historical_features, future_features], axis=1)
+        input_embeddings: Tensor = concat([historical_features, future_features], axis=1)
 
         lstm_layer, _ = apply_gating_layer(
             lstm_layer, self.hidden_layer_size, self.dropout_rate, activation=None)
@@ -1027,7 +1027,7 @@ class TemporalFusionTransformer(object):
                   """
                     self.quantiles = quantiles
 
-                def quantile_loss(self, a, b):
+                def quantile_loss(self, a: Tensor, b: Tensor):
                     """Returns quantile loss for specified quantiles.
                       Args:
                         a: Targets
@@ -1325,7 +1325,7 @@ class TemporalFusionTransformer(object):
 
         return {k: format_outputs(process_map[k]) for k in process_map}
 
-    def get_attention(self, df: DataFrame):
+    def get_attention(self, df: DataFrame) -> Dict:
         """Computes TFT attention weights for a given dataset.
     Args:
       df: Input dataframe
@@ -1339,7 +1339,7 @@ class TemporalFusionTransformer(object):
         identifiers = data['identifier']
         time = data['time']
 
-        def get_batch_attention_weights(input_batch):
+        def get_batch_attention_weights(input_batch) -> Dict:
             """Returns weights for a given minibatch of data."""
             input_placeholder = self._input_placeholder
             attention_weights = {}
