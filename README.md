@@ -7,7 +7,10 @@ Putting the awesome code from https://github.com/google-research/google-research
 
 The main function in script_train_fixed_params.py is configured to run the prediction on the testset. It does that by generating two csv files in the project folder plus the target dataframe if requested.
 
+Example:
+
 savedmodels_sorgenia_wind_mm+cop/
+
 ├── checkpoint
 
 ├── **p50.csv**
