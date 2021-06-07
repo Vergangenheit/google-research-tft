@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf1
-from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import ConfigProto, Session
 from tensorflow import Tensor
 from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 from typing import List, Set, Type, Union
@@ -153,7 +153,7 @@ def save(tf_session, model_folder, cp_name, scope=None):
     print('Model saved to: {0}'.format(save_path))
 
 
-def load(tf_session, model_folder, cp_name, scope=None, verbose=False):
+def load(tf_session: Session, model_folder: str, cp_name: str, scope: str =None, verbose: bool =False):
     """Loads Tensorflow graph from checkpoint.
   Args:
     tf_session: Session to load graph into
@@ -163,7 +163,7 @@ def load(tf_session, model_folder, cp_name, scope=None, verbose=False):
     verbose: Whether to print additional debugging information.
   """
     # Load model proper
-    load_path = os.path.join(model_folder, '{0}.ckpt'.format(cp_name))
+    load_path: str = os.path.join(model_folder, '{0}.ckpt'.format(cp_name))
 
     print('Loading model from {0}'.format(load_path))
 

@@ -9,6 +9,7 @@ def rolling_mape_multitarget(targets_df: DataFrame, preds_df: DataFrame, hours_m
     """calculates mape for multiple targets and returns a single df of rolling mapes
     :param : targets_df : DataFrame (dataframe of ground truths
     :param : preds_df : DataFrame (df of of predictions)
+    :param : hours_mape : int (window)
     :return : DataFrame of rolling mape values for every target"""
     count = 0
     for mt in targets_df.columns[1:]:
@@ -61,6 +62,14 @@ def rolling_mape_multitarget(targets_df: DataFrame, preds_df: DataFrame, hours_m
 
 
 def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int, hz: str) -> DataFrame:
+    """
+
+    :param targets_df: DataFrame (dataframe of ground truths)
+    :param preds_df: DataFrame (df predictions)
+    :param hours_mape: int (rolling mape window e.g: 700)
+    :param hz: str (prediction horizon 1h->12h)
+    :return: DataFrame (with a time and identifier fields and a column for the prediction based on hz)
+    """
     df_mape: DataFrame = pd.DataFrame(
         data={'forecast_time': preds_df['forecast_time'], 'identifier': preds_df['identifier'], 'true': targets_df[hz],
               'preds': preds_df[hz]})
@@ -109,13 +118,20 @@ def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: i
 
 
 def rolling_mape(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int) -> DataFrame:
+    """
+
+    :param targets_df: DataFrame (dataframe of ground truths)
+    :param preds_df: DataFrame (df predictions)
+    :param hours_mape: int (rolling mape window e.g: 700)
+    :return: DataFrame (follows the two input dfs' schema, with a time and identifier fields and a series of columns for every hz)
+    """
     count = 0
     for mt in targets_df.columns[2:]:
         if count == 0:
-            df_mape_final = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
+            df_mape_final: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
             count += 1
         else:
-            df_mape_interim = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
+            df_mape_interim: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
             df_mape_final[f'mape_{mt}'] = df_mape_interim[f'mape_{mt}']
             count += 1
 

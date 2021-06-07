@@ -1153,9 +1153,10 @@ class TemporalFusionTransformer(object):
         training_dataset: Dataset = tf.data.Dataset.from_generator(traindata_gen,
                                                                    output_types=(tf.float32, tf.float32, tf.float32),
                                                                    output_shapes=(
-                                                                   tf.TensorShape([None, data_size[1], data_size[2]]),
-                                                                   tf.TensorShape([None, label_size[1], 3]),
-                                                                   tf.TensorShape([None, flag_size[1]]),
+                                                                       tf.TensorShape(
+                                                                           [None, data_size[1], data_size[2]]),
+                                                                       tf.TensorShape([None, label_size[1], 3]),
+                                                                       tf.TensorShape([None, flag_size[1]]),
                                                                    )
                                                                    )
         training_dataset: Dataset = training_dataset.apply(tf.data.experimental.unbatch())
@@ -1185,7 +1186,7 @@ class TemporalFusionTransformer(object):
                                                                                          3]),
                                                                                     tf.TensorShape(
                                                                                         [None, flag_size[1]]),
-                                                                                    )
+                                                                     )
                                                                      )
         self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
         self.valid_dataset: Dataset = self.valid_dataset.batch(self.minibatch_size)
@@ -1269,7 +1270,7 @@ class TemporalFusionTransformer(object):
 
         return metrics[eval_metric]
 
-    def predict(self, df: DataFrame, return_targets=False) -> Dict:
+    def predict(self, df: DataFrame, return_targets: bool = False) -> Dict:
         """Computes predictions for a given input dataset.
         Args:
           df: Input dataframe
