@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from os import getenv
 from typing import Optional
 from datetime import datetime
+from etl.ETL import db_connection, group_hourly, extract_weather
 
 
 # General functions for data downloading & aggregation.
@@ -144,53 +145,6 @@ def preprocess_erg_wind(datapath: str, config: ExperimentConfig):
     print('Done.')
 
 
-def db_connection() -> Engine:
-    try:
-        from dotenv import load_dotenv
-
-        load_dotenv()
-    except:
-        print('No ".env" file or python-dotenv not installed... Using default env variables...')
-    dbname: Optional[str] = getenv('POSTGRES_DB_NAME')
-    host: Optional[str] = getenv('POSTGRES_HOST')
-    user: Optional[str] = getenv('POSTGRES_USERNAME')
-    password: Optional[str] = getenv('POSTGRES_PASSWORD')
-    port: Optional[str] = getenv('POSTGRES_PORT')
-
-    postgres_str: str = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
-
-    engine: Engine = create_engine(postgres_str)
-
-    return engine
-
-
-def group_hourly(df: DataFrame) -> DataFrame:
-    df: DataFrame = df.copy()
-    df['day']: Series = df['start_date_utc'].dt.year.astype('str') + '-' + df['start_date_utc'].dt.month.astype(
-        'str') + '-' + df[
-                            'start_date_utc'].dt.day.astype('str')
-    df['day']: Series = pd.to_datetime(df['day'], infer_datetime_format=True)
-    grouped: DataFrame = df.groupby(['plant_name_up', 'day', df.start_date_utc.dt.hour]).agg(
-        {'kwh': 'mean'})
-    grouped: DataFrame = grouped.reset_index(drop=False).rename(columns={'start_date_utc': 'time'})
-    #     grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'day', 'time'], ascending=True, ignore_index=True)
-    grouped['time'] = grouped['day'].astype('str') + ' ' + grouped['time'].astype('str') + ':00:00'
-    grouped['time'] = grouped['time'].astype('datetime64[ns, UTC]')
-    grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'time'], ascending=True, ignore_index=True)
-    grouped.drop('day', axis=1, inplace=True)
-
-    return grouped
-
-
-def extract_weather(weather_sql: str, engine: Engine) -> DataFrame:
-    weather_df: DataFrame = pd.read_sql_query(weather_sql, con=engine)
-    weather_df['wind_gusts_100m_1h_ms'] = weather_df['wind_gusts_100m_1h_ms'].astype('float64')
-    weather_df['wind_gusts_100m_ms'] = weather_df['wind_gusts_100m_ms'].astype('float64')
-    weather_df: DataFrame = weather_df.sort_values(by=['timestamp_utc'], ascending=True, ignore_index=True)
-
-    return weather_df
-
-
 def merge_df(energy: DataFrame, weather: DataFrame) -> DataFrame:
     df: DataFrame = energy.merge(weather, left_on=['time', 'plant_name_up'],
                                  right_on=['timestamp_utc', 'plant_name_up'])
@@ -218,6 +172,60 @@ def preprocess_sorgenia(weather_source: str, config: ExperimentConfig, get_df: b
     df: DataFrame = merge_df(energy_grouped, weather_df)
     # adding features
     timestamp_s: Series = df['time'].map(datetime.timestamp)
+    day: int = 24 * 60 * 60
+    year: float = 365.2425 * day
+
+    df['Day sin']: Series = np.sin(timestamp_s * (2 * np.pi / day))
+    df['Day cos']: Series = np.cos(timestamp_s * (2 * np.pi / day))
+    df['Year sin']: Series = np.sin(timestamp_s * (2 * np.pi / year))
+    df['Year cos']: Series = np.cos(timestamp_s * (2 * np.pi / year))
+
+    earliest_time: Timestamp = df.time.min()
+    df['t']: Series = (df['time'] - earliest_time).dt.seconds / 60 / 60 + (df['time'] - earliest_time).dt.days * 24
+    df['days_from_start']: Series = (df['time'] - earliest_time).dt.days
+    df["id"] = df["plant_name_up"]
+    df['hour']: Series = df["time"].dt.hour
+    df['day']: Series = df["time"].dt.day
+    df['day_of_week']: Series = df["time"].dt.dayofweek
+    df['month']: Series = df["time"].dt.month
+    df['categorical_id']: Series = df['id'].copy()
+    df['hours_from_start']: Series = df['t']
+    df['categorical_day_of_week']: Series = df['day_of_week'].copy()
+    df['categorical_hour']: Series = df['hour'].copy()
+
+    # save df to csv file
+    df.to_csv(config.data_csv_path, index=False)
+    print(f'Saved in {config.data_csv_path}')
+    print('Done.')
+    if get_df:
+        return df
+
+
+def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -> Optional[DataFrame]:
+    """end to end etl function from database to df
+        :param : config (ExperimentConfig) class for experiment configuration
+        :param : get_df (bool) whether to return df as pandas.DataFrame or not (useful for inference demo)
+        : return : df (Optional[DataFrame])
+    """
+    engine: Engine = db_connection()
+    sql_energy: str = "SELECT * FROM sorgenia_energy"
+    energy_df: DataFrame = pd.read_sql_query(sql_energy, con=engine)
+    energy_grouped: DataFrame = group_hourly(energy_df)
+    # extract weather copernicus
+    mm_query: str = "SELECT * FROM sorgenia_weather"
+    weather_df: DataFrame = extract_weather(mm_query, engine)
+    # INFER THE DATES GAP BETWEEN Energy and Weather dfs
+    upper: str = weather_df['timestamp_utc'].min().strftime('%Y-%m-%d %H:%M:%S')
+    lower: str = energy_grouped['time'].min().strftime('%Y-%m-%d %H:%M:%S')
+    cop_sql: str = f"SELECT * FROM sorgenia_weather_copernicus WHERE timestamp_utc >= '{lower}' and timestamp_utc < '{upper}'"
+    weather_remain: DataFrame = extract_weather(cop_sql, engine)
+    #  STACK WEATHER df together
+    weather: DataFrame = pd.concat([weather_df, weather_remain], axis=0)
+    weather.sort_values(by='timestamp_utc', ascending=True, inplace=True)
+    df: DataFrame = merge_df(energy_grouped, weather)
+
+    timestamp_s: Series = df['time'].map(datetime.timestamp)
+
     day: int = 24 * 60 * 60
     year: float = 365.2425 * day
 
