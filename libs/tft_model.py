@@ -20,6 +20,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, TimeDistributed, Input, LSTM
 from tensorflow import Tensor
 from tensorflow.python.data import Dataset
+from tensorflow.keras import Model
 
 # Layer definitions.
 concat = tf.keras.backend.concatenate
@@ -449,7 +450,7 @@ class TemporalFusionTransformer(object):
         # Build model
         self.model = self.build_model()
 
-    def get_tft_embeddings(self, all_inputs):
+    def get_tft_embeddings(self, all_inputs: Tensor) -> (Tensor, Tensor, Tensor, Tensor):
         """Transforms raw inputs to embeddings.
             Applies linear transformation onto continuous variables and uses embeddings
             for categorical variables.
@@ -987,7 +988,7 @@ class TemporalFusionTransformer(object):
 
         return transformer_layer, all_inputs, attention_components
 
-    def build_model(self):
+    def build_model(self) -> Model:
         """Build model and defines training losses.
         Returns:
           Fully defined Keras model.
