@@ -153,7 +153,7 @@ def save(tf_session, model_folder, cp_name, scope=None):
     print('Model saved to: {0}'.format(save_path))
 
 
-def load(tf_session: Session, model_folder: str, cp_name: str, scope: str =None, verbose: bool =False):
+def load(tf_session: Session, model_folder: str, cp_name: str, scope: str =None, verbose: bool =False, print_weights: bool = False):
     """Loads Tensorflow graph from checkpoint.
   Args:
     tf_session: Session to load graph into
@@ -167,7 +167,8 @@ def load(tf_session: Session, model_folder: str, cp_name: str, scope: str =None,
 
     print('Loading model from {0}'.format(load_path))
 
-    print_weights_in_checkpoint(model_folder, cp_name)
+    if print_weights:
+        print_weights_in_checkpoint(model_folder, cp_name)
 
     initial_vars = set(
         [v.name for v in tf1.get_default_graph().as_graph_def().node])
