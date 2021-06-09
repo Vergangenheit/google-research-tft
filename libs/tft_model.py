@@ -1428,7 +1428,7 @@ class TemporalFusionTransformer(object):
             # serialisation_path: str = self.get_keras_saved_path(model_folder)
             # print('Loading model from {}'.format(serialisation_path))
             # self.model.load_weights(serialisation_path)
-            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.h5"))
+            self.model.load_weights(os.path.join(model_folder, f"{self.exp_name}" + "_ckpt.h5"))
         else:
             # Loads tensorflow graph for optimal models.
             utils.load(
