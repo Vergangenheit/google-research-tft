@@ -1061,7 +1061,7 @@ class TemporalFusionTransformer(object):
         """
 
         print('*** Fitting {} ***'.format(self.name))
-        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
+        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.h5")
         # if os.path.exists(file_path):
         #     print(f"Loading model from {file_path}")
         #     self.load('', use_keras_loadings=True)
