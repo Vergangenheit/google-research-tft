@@ -118,7 +118,6 @@ class SorgeniaFormatter(GenericDataFormatter):
             categorical_scalers[col] = pp.LabelEncoder().fit(
                 srs.values)
             num_classes.append(srs.nunique())
-
         # Set categorical scaler outputs
         self._cat_scalers = categorical_scalers
         self._num_classes_per_cat_input = num_classes

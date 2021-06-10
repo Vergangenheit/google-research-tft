@@ -176,14 +176,14 @@ class HyperparamOptManager:
 
     def update_score(self, parameters, loss, model, info="") -> bool:
         """Updates the results from last optimisation run.
-    Args:
-      parameters: Hyperparameters used in optimisation.
-      loss: Validation loss obtained.
-      model: Model to serialised if required.
-      info: Any ancillary information to tag on to results.
-    Returns:
-      Boolean flag indicating if the model is the best seen so far.
-    """
+        Args:
+          parameters: Hyperparameters used in optimisation.
+          loss: Validation loss obtained.
+          model: Model to serialised if required.
+          info: Any ancillary information to tag on to results.
+        Returns:
+          Boolean flag indicating if the model is the best seen so far.
+        """
 
         if np.isnan(loss):
             loss = np.Inf
