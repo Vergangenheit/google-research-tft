@@ -1061,7 +1061,7 @@ class TemporalFusionTransformer(object):
         """
 
         print('*** Fitting {} ***'.format(self.name))
-        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
+        # file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
         # if os.path.exists(file_path):
         #     print(f"Loading model from {file_path}")
         #     self.load('', use_keras_loadings=True)
@@ -1072,7 +1072,7 @@ class TemporalFusionTransformer(object):
                 patience=self.early_stopping_patience,
                 min_delta=1e-4),
             tf.keras.callbacks.ModelCheckpoint(
-                filepath=file_path,
+                filepath=self.get_keras_saved_path(self._temp_folder),
                 monitor='val_loss',
                 save_best_only=True,
                 mode='min',
@@ -1217,7 +1217,7 @@ class TemporalFusionTransformer(object):
         if os.path.exists(tmp_checkpont):
             self.load(
                 self._temp_folder,
-                use_keras_loadings=False)
+                use_keras_loadings=True)
 
         else:
             print('Cannot load from {}, skipping ...'.format(self._temp_folder))
