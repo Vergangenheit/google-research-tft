@@ -1061,7 +1061,7 @@ class TemporalFusionTransformer(object):
         """
 
         print('*** Fitting {} ***'.format(self.name))
-        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.h5")
+        file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
         # if os.path.exists(file_path):
         #     print(f"Loading model from {file_path}")
         #     self.load('', use_keras_loadings=True)
@@ -1217,7 +1217,7 @@ class TemporalFusionTransformer(object):
         if os.path.exists(tmp_checkpont):
             self.load(
                 self._temp_folder,
-                use_keras_loadings=True)
+                use_keras_loadings=False)
 
         else:
             print('Cannot load from {}, skipping ...'.format(self._temp_folder))
@@ -1428,7 +1428,7 @@ class TemporalFusionTransformer(object):
             # serialisation_path: str = self.get_keras_saved_path(model_folder)
             # print('Loading model from {}'.format(serialisation_path))
             # self.model.load_weights(serialisation_path)
-            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.h5"))
+            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5"))
         else:
             # Loads tensorflow graph for optimal models.
             utils.load(

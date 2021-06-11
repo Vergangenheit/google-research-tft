@@ -132,7 +132,7 @@ def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0) -> Co
     return tf_config
 
 
-def save(tf_session, model_folder, cp_name, scope=None):
+def save(tf_session: Session, model_folder: str, cp_name: str, scope: str = None):
     """Saves Tensorflow graph to checkpoint.
   Saves all trainiable variables under a given variable scope to checkpoint.
   Args:
@@ -145,7 +145,7 @@ def save(tf_session, model_folder, cp_name, scope=None):
     if scope is None:
         saver = tf1.train.Saver()
     else:
-        var_list = tf1.get_collection(tf1.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
+        var_list: List = tf1.get_collection(tf1.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
         saver = tf1.train.Saver(var_list=var_list, max_to_keep=100000)
 
     save_path = saver.save(tf_session,
