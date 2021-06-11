@@ -1288,11 +1288,18 @@ class TemporalFusionTransformer(object):
         identifier: ndarray = data['identifier']
         outputs: ndarray = data['outputs']
 
+        # combined = self.model.predict(
+        #     inputs,
+        #     workers=16,
+        #     use_multiprocessing=True,
+        #     batch_size=self.minibatch_size)
+        # TODO fix below
         combined = self.model.predict(
             inputs,
             workers=16,
             use_multiprocessing=True,
-            batch_size=self.minibatch_size)
+            batch_size=1)
+
 
         # Format output_csv
         if self.output_size != 1:
@@ -1428,7 +1435,7 @@ class TemporalFusionTransformer(object):
             # serialisation_path: str = self.get_keras_saved_path(model_folder)
             # print('Loading model from {}'.format(serialisation_path))
             # self.model.load_weights(serialisation_path)
-            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.h5"))
+            self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5"))
         else:
             # Loads tensorflow graph for optimal models.
             utils.load(

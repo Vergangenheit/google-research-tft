@@ -49,7 +49,6 @@ class HyperparamOptManager:
         self.results = pd.DataFrame()
         self.fixed_params = fixed_params
         self.saved_params = pd.DataFrame()
-
         self.best_score = np.Inf
         self.optimal_name = ""
 

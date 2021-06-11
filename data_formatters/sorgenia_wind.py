@@ -7,6 +7,8 @@ from libs import utils
 from os import getenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, Connection
+import os
+import json
 
 
 class SorgeniaFormatter(GenericDataFormatter):
@@ -44,7 +46,7 @@ class SorgeniaFormatter(GenericDataFormatter):
 
     ]
 
-    def __init__(self):
+    def __init__(self, data_folder: str):
         """Initialises formatter."""
 
         self.identifiers = None
@@ -52,6 +54,7 @@ class SorgeniaFormatter(GenericDataFormatter):
         self._cat_scalers = None
         self._target_scaler = None
         self._num_classes_per_cat_input = None
+        self.data_folder = data_folder
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
     def split_data(self, df: DataFrame) -> (DataFrame, DataFrame, DataFrame):
@@ -66,9 +69,9 @@ class SorgeniaFormatter(GenericDataFormatter):
         # date_index: DatetimeIndex = pd.date_range(start=df.time.min(), end=df.time.max(),
         #                                           freq=pd.offsets.Hour(1))
         index: Series = df['days_from_start']
-        train: DataFrame = df.loc[index < int(index.max()*0.7)]
-        valid: DataFrame = df.loc[(index >= int(index.max()*0.7)) & (index < int(index.max()*0.9))]
-        test: DataFrame = df.loc[index >= int(index.max()*0.9)]
+        train: DataFrame = df.loc[index < int(index.max() * 0.7)]
+        valid: DataFrame = df.loc[(index >= int(index.max() * 0.7)) & (index < int(index.max() * 0.9))]
+        test: DataFrame = df.loc[index >= int(index.max() * 0.9)]
 
         self.set_scalers(train)
 
@@ -82,9 +85,9 @@ class SorgeniaFormatter(GenericDataFormatter):
         print('Setting scalers with training data...')
         column_definitions: List = self.get_column_definition()
         id_column: str = utils.get_single_col_by_input_type(InputTypes.ID,
-                                                       column_definitions)
+                                                            column_definitions)
         target_column: str = utils.get_single_col_by_input_type(InputTypes.TARGET,
-                                                           column_definitions)
+                                                                column_definitions)
 
         # Format real scalers
         real_inputs: List = utils.extract_cols_from_data_type(
@@ -202,6 +205,10 @@ class SorgeniaFormatter(GenericDataFormatter):
             'early_stopping_patience': 10,
             'multiprocessing_workers': 5
         }
+        # read params from data_folder
+        params_path: str = os.path.join(self.data_folder, 'fixed', 'params.csv')
+        saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
+        fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
 
         return fixed_params
 
