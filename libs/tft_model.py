@@ -1431,6 +1431,7 @@ class TemporalFusionTransformer(object):
             self.model.load_weights(os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5"))
         else:
             # Loads tensorflow graph for optimal models.
+            print("Loading from ", model_folder, self.name)
             utils.load(
                 tf.compat.v1.keras.backend.get_session(),
                 model_folder,
