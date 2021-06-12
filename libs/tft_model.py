@@ -1288,17 +1288,11 @@ class TemporalFusionTransformer(object):
         identifier: ndarray = data['identifier']
         outputs: ndarray = data['outputs']
 
-        # combined = self.model.predict(
-        #     inputs,
-        #     workers=16,
-        #     use_multiprocessing=True,
-        #     batch_size=self.minibatch_size)
-        # TODO fix below
-        combined = self.model.predict(
+        combined: ndarray = self.model.predict(
             inputs,
             workers=16,
             use_multiprocessing=True,
-            batch_size=1)
+            batch_size=self.minibatch_size)
 
 
         # Format output_csv
