@@ -385,6 +385,7 @@ class TemporalFusionTransformer(object):
         Args:
           raw_params: Parameters to define TFT
           use_cudnn: Whether to use CUDNN GPU optimised LSTM
+            (be very careful with this parameter because what has been selected for training constraints the loading of the model for inference)
         """
 
         self.name = self.__class__.__name__
