@@ -43,7 +43,7 @@ class ExperimentConfig(object):
         self.root_folder = root_folder
         self.experiment = experiment
         self.data_folder = os.path.join(root_folder, 'data', experiment, 'data')
-        self.model_folder = os.path.join(root_folder, 'saved_models', experiment)
+        self.model_folder = root_folder
         self.results_folder = os.path.join(root_folder, 'results', experiment)
 
         # Creates folders if they don't exist

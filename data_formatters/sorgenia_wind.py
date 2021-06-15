@@ -206,7 +206,7 @@ class SorgeniaFormatter(GenericDataFormatter):
             'multiprocessing_workers': 5
         }
         # read params from data_folder
-        params_path: str = os.path.join(self.data_folder, 'fixed', 'params.csv')
+        params_path: str = os.path.join(self.data_folder, 'params.csv')
         saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
         fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
 
@@ -242,11 +242,10 @@ class SorgeniaFormatter(GenericDataFormatter):
         load the dataset and apply the split_data method to fit the scalers
         :return: None
         """
-        # save_path: str = os.path.join(self.data_folder, "fixed")
-        # save all the scalers
-        if not os.path.exists(os.path.join(self.save_path, "scalers")):
-            os.makedirs(os.path.join(self.save_path, "scalers"))
-        with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "wb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "wb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "wb") as tar:
+
+        if not os.path.exists(os.path.join(self.data_folder, "scalers")):
+            os.makedirs(os.path.join(self.data_folder, "scalers"))
+        with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "wb") as real, open(os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "wb") as cat, open(os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "wb") as tar:
             pickle.dump(self._real_scalers, real)
             pickle.dump(self._cat_scalers, cat)
             pickle.dump(self._target_scaler, tar)
@@ -256,8 +255,9 @@ class SorgeniaFormatter(GenericDataFormatter):
          Loads the saved scalers for inference
         :return: None
         """
-        if os.path.exists(os.path.join(self.save_path, "scalers")):
-            with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "rb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "rb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "rb") as tar:
+
+        if os.path.exists(os.path.join(self.data_folder, "scalers")):
+            with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "rb") as real, open(os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "rb") as cat, open(os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "rb") as tar:
                 self._real_scalers = pickle.load(real)
                 self._cat_scalers = pickle.load(cat)
                 self._target_scaler = pickle.load(tar)
