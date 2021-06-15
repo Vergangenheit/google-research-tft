@@ -159,8 +159,8 @@ class GenericDataFormatter(abc.ABC):
                 len(self._get_input_columns()),
             'output_size':
                 len(_get_locations({InputTypes.TARGET}, column_definition)),
-            'category_counts':
-                self.num_classes_per_cat_input,
+            # 'category_counts':
+            #     self.num_classes_per_cat_input,
             'input_obs_loc':
                 _get_locations({InputTypes.TARGET}, column_definition),
             'static_input_loc':
@@ -180,11 +180,10 @@ class GenericDataFormatter(abc.ABC):
 
         required_keys = [
             'total_time_steps', 'num_encoder_steps', 'num_epochs',
-            'early_stopping_patience', 'multiprocessing_workers'
+            'early_stopping_patience', 'multiprocessing_workers', 'category_counts',
         ]
 
         fixed_params = self.get_fixed_params()
-
         for k in required_keys:
             if k not in fixed_params:
                 raise ValueError('Field {}'.format(k) +

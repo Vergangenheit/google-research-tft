@@ -88,4 +88,4 @@ class ExperimentConfig(object):
             'sorgenia_wind': SorgeniaFormatter,
         }
 
-        return data_formatter_class[self.experiment]()
+        return data_formatter_class[self.experiment](self.model_folder)

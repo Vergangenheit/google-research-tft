@@ -18,6 +18,12 @@ import libs.utils as utils
 def compute_predictions(test: DataFrame, opt_manager: HyperparamOptManager, formatter: SorgeniaFormatter,
                         config: ExperimentConfig, tf_config: ConfigProto, default_keras_session: Session, exp_name: str):
     """function to compute predictions on testset (might work with another df with same structure)
+    :param: test (input data)
+    :param: opt_manager (params container object)
+    :param: formatter (formatter object)
+    :param: config (configuration object)
+    :param: tf_config (tf graph Config object)
+    :param: default_keras_session
     :param: exp_name (str) sorgenia_wind or sorgenia_wind_no_forecasts"""
     print("*** Running tests ***")
     tf1.reset_default_graph()

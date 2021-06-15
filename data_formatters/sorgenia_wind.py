@@ -4,9 +4,9 @@ import sklearn.preprocessing as pp
 from typing import Tuple, Dict, List, Optional
 from pandas import DataFrame, Series, DatetimeIndex
 from libs import utils
-from os import getenv
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine, Connection
+import os
+import json
+import pickle
 
 
 class SorgeniaFormatter(GenericDataFormatter):
@@ -44,7 +44,7 @@ class SorgeniaFormatter(GenericDataFormatter):
 
     ]
 
-    def __init__(self):
+    def __init__(self, data_folder: str):
         """Initialises formatter."""
 
         self.identifiers = None
@@ -52,6 +52,8 @@ class SorgeniaFormatter(GenericDataFormatter):
         self._cat_scalers = None
         self._target_scaler = None
         self._num_classes_per_cat_input = None
+        self.data_folder = data_folder
+        self.save_path: str = os.path.join(self.data_folder, "fixed")
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
     def split_data(self, df: DataFrame) -> (DataFrame, DataFrame, DataFrame):
@@ -66,12 +68,13 @@ class SorgeniaFormatter(GenericDataFormatter):
         # date_index: DatetimeIndex = pd.date_range(start=df.time.min(), end=df.time.max(),
         #                                           freq=pd.offsets.Hour(1))
         index: Series = df['days_from_start']
-        train: DataFrame = df.loc[index < int(index.max()*0.7)]
-        valid: DataFrame = df.loc[(index >= int(index.max()*0.7)) & (index < int(index.max()*0.9))]
-        test: DataFrame = df.loc[index >= int(index.max()*0.9)]
+        train: DataFrame = df.loc[index < int(index.max() * 0.7)]
+        valid: DataFrame = df.loc[(index >= int(index.max() * 0.7)) & (index < int(index.max() * 0.9))]
+        test: DataFrame = df.loc[index >= int(index.max() * 0.9)]
 
         self.set_scalers(train)
-
+        # save scalers to serialized format
+        self.save_scalers()
         return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df: DataFrame):
@@ -82,9 +85,9 @@ class SorgeniaFormatter(GenericDataFormatter):
         print('Setting scalers with training data...')
         column_definitions: List = self.get_column_definition()
         id_column: str = utils.get_single_col_by_input_type(InputTypes.ID,
-                                                       column_definitions)
+                                                            column_definitions)
         target_column: str = utils.get_single_col_by_input_type(InputTypes.TARGET,
-                                                           column_definitions)
+                                                                column_definitions)
 
         # Format real scalers
         real_inputs: List = utils.extract_cols_from_data_type(
@@ -202,6 +205,10 @@ class SorgeniaFormatter(GenericDataFormatter):
             'early_stopping_patience': 10,
             'multiprocessing_workers': 5
         }
+        # read params from data_folder
+        params_path: str = os.path.join(self.data_folder, 'fixed', 'params.csv')
+        saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
+        fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
 
         return fixed_params
 
@@ -228,3 +235,33 @@ class SorgeniaFormatter(GenericDataFormatter):
               Tuple of (training samples, validation samples)
         """
         return 169435, 46963
+
+    def save_scalers(self):
+        """
+        This method saves the scalers into serialized format in order to re-use them for inference without having to
+        load the dataset and apply the split_data method to fit the scalers
+        :return: None
+        """
+        # save_path: str = os.path.join(self.data_folder, "fixed")
+        # save all the scalers
+        if not os.path.exists(os.path.join(self.save_path, "scalers")):
+            os.makedirs(os.path.join(self.save_path, "scalers"))
+        with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "wb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "wb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "wb") as tar:
+            pickle.dump(self._real_scalers, real)
+            pickle.dump(self._cat_scalers, cat)
+            pickle.dump(self._target_scaler, tar)
+
+    def load_scalers(self):
+        """
+         Loads the saved scalers for inference
+        :return: None
+        """
+        if os.path.exists(os.path.join(self.save_path, "scalers")):
+            with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "rb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "rb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "rb") as tar:
+                self._real_scalers = pickle.load(real)
+                self._cat_scalers = pickle.load(cat)
+                self._target_scaler = pickle.load(tar)
+        else:
+            raise ValueError('There are no saved scalers')
+
+
