@@ -400,8 +400,7 @@ class TemporalFusionTransformer(object):
         self.input_size = int(params['input_size'])
         self.output_size = int(params['output_size'])
         # print("category counts are ", str(params['category_counts']))
-        # self.category_counts = json.loads(str(params['category_counts']))
-        self.category_counts = params['category_counts']
+        self.category_counts = json.loads(str(params['category_counts']))
         self.n_multiprocessing_workers = int(params['multiprocessing_workers'])
         # self.data_folder: str = params['data_folder']
 

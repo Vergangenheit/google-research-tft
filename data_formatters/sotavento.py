@@ -234,7 +234,7 @@ class SotaventoFormatter(GenericDataFormatter):
             Returns:
               Tuple of (training samples, validation samples)
         """
-        return 12280, 3508
+        return 12061, 3349
 
     def save_scalers(self):
         """
