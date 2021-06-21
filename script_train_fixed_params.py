@@ -79,7 +79,7 @@ def main(expt_name: str,
 
     print("Loading & splitting data...")
     print(data_csv_path)
-    if expt_name != 'erg_wind':
+    if expt_name not in ['erg_wind', 'sotavento']:
         raw_data: DataFrame = pd.read_csv(data_csv_path, index_col=0)
     else:
         raw_data: DataFrame = pd.read_csv(data_csv_path)
