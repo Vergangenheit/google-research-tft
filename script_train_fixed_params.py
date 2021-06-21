@@ -240,7 +240,7 @@ if __name__ == "__main__":
     print("Using output folder {}".format(output_folder))
 
     config = ExperimentConfig(name, output_folder)
-    formatter = config.make_data_formatter()
+    formatter = config.make_data_formatter(inference=False)
 
     # Customise inputs to main() for new datasets.
     main(expt_name=name,

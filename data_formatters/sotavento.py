@@ -43,7 +43,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
     ]
 
-    def __init__(self, data_folder: str):
+    def __init__(self, data_folder: str, inference: bool):
         """Initialises formatter."""
 
         self.identifiers = None
@@ -52,6 +52,7 @@ class SotaventoFormatter(GenericDataFormatter):
         self._target_scaler = None
         self._num_classes_per_cat_input = None
         self.data_folder = data_folder
+        self.inference = inference
         self.save_path: str = os.path.join(self.data_folder, "fixed")
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
@@ -195,9 +196,10 @@ class SotaventoFormatter(GenericDataFormatter):
             'multiprocessing_workers': 5
         }
         # read params from data_folder
-        params_path: str = os.path.join(self.data_folder, 'params.csv')
-        saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
-        fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
+        if self.inference:
+            params_path: str = os.path.join(self.data_folder, 'params.csv')
+            saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
+            fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
 
         return fixed_params
 
@@ -236,7 +238,7 @@ class SotaventoFormatter(GenericDataFormatter):
             os.makedirs(os.path.join(self.data_folder, "scalers"))
         with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "wb") as real, open(
                 os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "wb") as cat, open(
-                os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "wb") as tar:
+            os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "wb") as tar:
             pickle.dump(self._real_scalers, real)
             pickle.dump(self._cat_scalers, cat)
             pickle.dump(self._target_scaler, tar)
@@ -250,7 +252,7 @@ class SotaventoFormatter(GenericDataFormatter):
         if os.path.exists(os.path.join(self.data_folder, "scalers")):
             with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "rb") as real, open(
                     os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "rb") as cat, open(
-                    os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "rb") as tar:
+                os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "rb") as tar:
                 self._real_scalers = pickle.load(real)
                 self._cat_scalers = pickle.load(cat)
                 self._target_scaler = pickle.load(tar)

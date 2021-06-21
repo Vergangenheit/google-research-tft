@@ -75,7 +75,7 @@ class ExperimentConfig(object):
 
         return 240 if self.experiment == 'volatility' else 60
 
-    def make_data_formatter(self) -> GenericDataFormatter:
+    def make_data_formatter(self, inference: bool) -> GenericDataFormatter:
         """Gets a data formatter object for experiment.
     Returns:
       Default DataFormatter per experiment.
@@ -91,4 +91,4 @@ class ExperimentConfig(object):
             'sotavento': SotaventoFormatter,
         }
 
-        return data_formatter_class[self.experiment](self.model_folder)
+        return data_formatter_class[self.experiment](self.model_folder, inference)
