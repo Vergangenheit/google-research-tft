@@ -17,6 +17,7 @@ from data_formatters.electricity import ElectricityFormatter
 from data_formatters.favorita import FavoritaFormatter
 from data_formatters.traffic import TrafficFormatter
 from data_formatters.volatility import VolatilityFormatter
+from data_formatters.sotavento import SotaventoFormatter
 from expt_settings.configs import ExperimentConfig
 from libs.hyperparam_opt import HyperparamOptManager
 from libs.tft_model import TemporalFusionTransformer
@@ -205,7 +206,7 @@ if __name__ == "__main__":
             metavar="e",
             type=str,
             nargs="?",
-            default="sorgenia_wind",
+            default="sotavento",
             choices=experiment_names,
             help="Experiment Name. Default={}".format(",".join(experiment_names))
         )
