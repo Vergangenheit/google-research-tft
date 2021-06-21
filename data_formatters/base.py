@@ -180,7 +180,7 @@ class GenericDataFormatter(abc.ABC):
 
         required_keys = [
             'total_time_steps', 'num_encoder_steps', 'num_epochs',
-            'early_stopping_patience', 'multiprocessing_workers', 'category_counts',
+            'early_stopping_patience', 'multiprocessing_workers',
         ]
 
         fixed_params = self.get_fixed_params()
