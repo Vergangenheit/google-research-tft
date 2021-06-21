@@ -44,7 +44,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
     ]
 
-    def __init__(self, data_folder: str, inference: bool):
+    def __init__(self, data_folder: str):
         """Initialises formatter."""
 
         self.identifiers = None
@@ -53,7 +53,6 @@ class SotaventoFormatter(GenericDataFormatter):
         self._target_scaler = None
         self._num_classes_per_cat_input = None
         self.data_folder = data_folder
-        self.inference = inference
         self.save_path: str = os.path.join(self.data_folder, "fixed")
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
@@ -205,10 +204,6 @@ class SotaventoFormatter(GenericDataFormatter):
             'multiprocessing_workers': 5
         }
         # read params from data_folder
-        if self.inference:
-            params_path: str = os.path.join(self.data_folder, 'params.csv')
-            saved_params: DataFrame = pd.read_csv(params_path, index_col=0, header=0, names=['data'])
-            fixed_params['category_counts'] = json.loads(saved_params.loc['category_counts', 'data'])
 
         return fixed_params
 
