@@ -6,6 +6,8 @@ from data_formatters.traffic import TrafficFormatter
 from data_formatters.volatility import VolatilityFormatter
 from data_formatters.erg_wind import ErgFormatter
 from data_formatters.sorgenia_wind import SorgeniaFormatter
+from data_formatters.sotavento import SotaventoFormatter
+from data_formatters.base import GenericDataFormatter
 from typing import Union
 
 
@@ -21,7 +23,7 @@ class ExperimentConfig(object):
         hyperparam_iterations: Default number of random search iterations for
           experiment.
       """
-    default_experiments = ['volatility', 'electricity', 'traffic', 'favorita', 'erg_wind', 'sorgenia_wind']
+    default_experiments = ['volatility', 'electricity', 'traffic', 'favorita', 'erg_wind', 'sorgenia_wind', 'sotavento']
 
     def __init__(self, experiment: str = 'volatility', root_folder=None):
         """Creates configs based on default experiment chosen.
@@ -43,8 +45,7 @@ class ExperimentConfig(object):
         self.root_folder = root_folder
         self.experiment = experiment
         self.data_folder = os.path.join(root_folder, 'data', experiment, 'data')
-
-        self.model_folder = os.path.join(root_folder, 'saved_models', experiment)
+        self.model_folder = root_folder
         self.results_folder = os.path.join(root_folder, 'results', experiment)
 
         # Creates folders if they don't exist
@@ -64,6 +65,7 @@ class ExperimentConfig(object):
             'favorita': 'favorita_consolidated.csv',
             'erg_wind': 'erg_7farms_final.csv',
             'sorgenia_wind': 'sorgenia_final.csv',
+            'sotavento': 'sotavento.csv',
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
@@ -73,8 +75,7 @@ class ExperimentConfig(object):
 
         return 240 if self.experiment == 'volatility' else 60
 
-    def make_data_formatter(self) -> Union[
-        VolatilityFormatter, ElectricityFormatter, TrafficFormatter, FavoritaFormatter, ErgFormatter]:
+    def make_data_formatter(self, inference: bool) -> GenericDataFormatter:
         """Gets a data formatter object for experiment.
     Returns:
       Default DataFormatter per experiment.
@@ -87,6 +88,7 @@ class ExperimentConfig(object):
             'favorita': FavoritaFormatter,
             'erg_wind': ErgFormatter,
             'sorgenia_wind': SorgeniaFormatter,
+            'sotavento': SotaventoFormatter,
         }
 
-        return data_formatter_class[self.experiment]()
+        return data_formatter_class[self.experiment](self.model_folder, inference)
