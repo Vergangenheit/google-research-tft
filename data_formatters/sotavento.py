@@ -22,7 +22,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('speed_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('direction_deg', DataTypes.DATE, InputTypes.OBSERVED_INPUT),
         ('energy_kwh', DataTypes.REAL_VALUED, InputTypes.TARGET),
-        ('time', DataTypes.DATE, InputTypes.KNOWN_INPUT),
+        ('time', DataTypes.DATE, InputTypes.TIME),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
