@@ -19,6 +19,7 @@ class SotaventoFormatter(GenericDataFormatter):
                 identifiers: Entity identifiers used in experiments.
     """
     _column_definition = [
+        ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('speed_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('direction_deg', DataTypes.DATE, InputTypes.OBSERVED_INPUT),
         ('energy_kwh', DataTypes.REAL_VALUED, InputTypes.TARGET),
@@ -26,7 +27,6 @@ class SotaventoFormatter(GenericDataFormatter):
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
         ('dewpoint_2m_K', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('temperature_K', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('mean_sealev_pressure_hPa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
