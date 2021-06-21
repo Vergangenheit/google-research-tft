@@ -64,7 +64,15 @@ class SotaventoFormatter(GenericDataFormatter):
             Returns:
               Tuple of transformed (train, valid, test) data.
         """
-        pass
+        index: Series = df['days_from_start']
+        train: DataFrame = df.loc[index < int(index.max() * 0.7)]
+        valid: DataFrame = df.loc[(index >= int(index.max() * 0.7)) & (index < int(index.max() * 0.9))]
+        test: DataFrame = df.loc[index >= int(index.max() * 0.9)]
+
+        self.set_scalers(train)
+        # save scalers to serialized format
+        self.save_scalers()
+        return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df: DataFrame):
         """Calibrates scalers using the data supplied.
