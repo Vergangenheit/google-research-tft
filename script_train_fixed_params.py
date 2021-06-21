@@ -124,6 +124,7 @@ def main(expt_name: str,
             model: TemporalFusionTransformer = ModelClass(params, use_cudnn=False)
             params.pop('data_folder', None)
             params.pop('exp_name', None)
+            params.pop('category_counts', None)
             if not os.path.exists(os.path.join(model.data_folder, 'data.npy')) and not model.training_data_cached():
                 model.cache_batched_data(train, "train", num_samples=train_samples)
             if not os.path.exists(os.path.join(model.data_folder, 'val_data.npy')):
