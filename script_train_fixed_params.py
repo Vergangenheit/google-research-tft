@@ -118,6 +118,7 @@ def main(expt_name: str,
             tf1.keras.backend.set_session(sess)
 
             params: Dict = opt_manager.get_next_parameters()
+            print("Params are ", params)
             params['exp_name'] = expt_name
             params['data_folder'] = os.path.abspath(os.path.join(data_csv_path, os.pardir))
             model: TemporalFusionTransformer = ModelClass(params, use_cudnn=False)
