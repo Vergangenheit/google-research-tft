@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from os import getenv
 from typing import Optional
 from datetime import datetime
-from etl.ETL import db_connection, group_hourly, extract_weather
+from etl.ETL import db_connection, group_hourly, extract_weather, etl_weather, etl_plant
 
 
 # General functions for data downloading & aggregation.
@@ -255,11 +255,41 @@ def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -
         return df
 
 
+def preprocess_sotavento(config: ExperimentConfig, get_df: bool = False) -> Optional[DataFrame]:
+    engine: Engine = db_connection()
+    energy_df = etl_plant("SELECT * FROM energy_sotavento", engine)
+    weather_df: DataFrame = etl_weather(engine)
+    weather_df.drop(['lat', 'long'], axis=1, inplace=True)
+    # merge on time column
+    df: DataFrame = energy_df.merge(weather_df, left_on=['date'], right_on=['time'])
+    df.drop(['date', 'cut_in', 'cut_out'], axis=1, inplace=True)
+    df.sort_values(by='time', ascending=True, ignore_index=True, inplace=True)
+
+    earliest_time: Timestamp = df.time.min()
+    df['t']: Series = (df['time'] - earliest_time).dt.seconds / 60 / 60 + (df['time'] - earliest_time).dt.days * 24
+    df['days_from_start']: Series = (df['time'] - earliest_time).dt.days
+    df["id"] = "sotavento"
+    df['hour']: Series = df["time"].dt.hour
+    df['day']: Series = df["time"].dt.day
+    df['day_of_week']: Series = df["time"].dt.dayofweek
+    df['month']: Series = df["time"].dt.month
+    df['categorical_id']: Series = df['id'].copy()
+    df['hours_from_start']: Series = df['t']
+    df['categorical_day_of_week']: Series = df['day_of_week'].copy()
+    df['categorical_hour']: Series = df['hour'].copy()
+
+    df.to_csv(config.data_csv_path, index=False)
+    print(f'Saved in {config.data_csv_path}')
+    print('Done.')
+    if get_df:
+        return df
+
+
 if __name__ == "__main__":
     # expt_config = ExperimentConfig('electricity', './outputs/data/electricity')
     # csv_path: str = download_electricity(expt_config)
     # preprocess_electricty(csv_path, expt_config)
     # expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
     # preprocess_sorgenia(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
-    expt_config = ExperimentConfig('sorgenia_wind', './outputs/data/sorgenia_wind')
-    preprocess_sorgenia('copernicus', expt_config)
+    expt_config = ExperimentConfig('sotavento', './outputs/data/sotavento')
+    preprocess_sotavento(expt_config)
