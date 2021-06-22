@@ -150,4 +150,13 @@ def extract_mm(engine: Engine) -> DataFrame:
     weather_mm['date'] = weather_mm['date'].astype('datetime64[s]')
     weather_mm.rename(columns={'lon': 'long', 'date': 'time'}, inplace=True)
 
+    timestamp_s: Series = weather_mm['time'].map(datetime.timestamp)
+    day: int = 24 * 60 * 60
+    year: float = 365.2425 * day
+
+    weather_mm['Day sin']: Series = np.sin(timestamp_s * (2 * np.pi / day))
+    weather_mm['Day cos']: Series = np.cos(timestamp_s * (2 * np.pi / day))
+    weather_mm['Year sin']: Series = np.sin(timestamp_s * (2 * np.pi / year))
+    weather_mm['Year cos']: Series = np.cos(timestamp_s * (2 * np.pi / year))
+
     return weather_mm
