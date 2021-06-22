@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from os import getenv
 from typing import Optional
 from datetime import datetime
-from etl.ETL import db_connection, group_hourly, extract_weather, etl_weather, etl_plant
+from etl.ETL import db_connection, group_hourly, extract_weather, etl_weather, etl_plant, extract_mm
 
 
 # General functions for data downloading & aggregation.
@@ -255,10 +255,13 @@ def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -
         return df
 
 
-def preprocess_sotavento(config: ExperimentConfig, get_df: bool = False) -> Optional[DataFrame]:
+def preprocess_sotavento(config: ExperimentConfig, source: str, get_df: bool = False) -> Optional[DataFrame]:
     engine: Engine = db_connection()
     energy_df = etl_plant("SELECT * FROM energy_sotavento", engine)
-    weather_df: DataFrame = etl_weather(engine)
+    if source == 'meteomatics':
+        weather_df: DataFrame = extract_mm(engine)
+    else:
+        weather_df: DataFrame = etl_weather(engine)
     weather_df.drop(['lat', 'long'], axis=1, inplace=True)
     # merge on time column
     df: DataFrame = energy_df.merge(weather_df, left_on=['date'], right_on=['time'])
@@ -292,4 +295,4 @@ if __name__ == "__main__":
     # expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
     # preprocess_sorgenia(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
     expt_config = ExperimentConfig('sotavento', './outputs/data/sotavento')
-    preprocess_sotavento(expt_config)
+    preprocess_sotavento(config=expt_config, source='meteomatics')

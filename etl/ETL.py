@@ -127,6 +127,7 @@ def etl_plant(sql_energy: str, engine: Engine) -> DataFrame:
 
     return data_reduced
 
+
 def etl_weather(engine: Engine) -> DataFrame:
     data: DataFrame = pd.read_sql_query("SELECT * FROM pala_spain", con=engine)
     data['time']: Series = data['time'].astype('datetime64[ns]')
@@ -142,3 +143,11 @@ def etl_weather(engine: Engine) -> DataFrame:
     data['Year cos']: Series = np.cos(timestamp_s * (2 * np.pi / year))
 
     return data
+
+
+def extract_mm(engine: Engine) -> DataFrame:
+    weather_mm: DataFrame = pd.read_sql_query("SELECT *FROM meteomatics_sotavento", con=engine)
+    weather_mm['date'] = weather_mm['date'].astype('datetime64[s]')
+    weather_mm.rename(columns={'lon': 'long', 'date': 'time'}, inplace=True)
+
+    return weather_mm
