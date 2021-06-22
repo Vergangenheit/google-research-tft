@@ -30,7 +30,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('temperature_2m_c', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('msl_pressure_hpa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('sfc_pressure_hpa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('precipitation_1h_mm', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('precip_1h_mm', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('wind_speed_mean_10m_1h_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('wind_speed_mean_100m_1h_ms', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('wind_dir_mean_100m_1h_d', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
