@@ -27,7 +27,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
         ('dew_point_2m_c', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
-        ('temperature_2m_c', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
+        ('t_2m_c', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('msl_pressure_hpa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('sfc_pressure_hpa', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
         ('precip_1h_mm', DataTypes.REAL_VALUED, InputTypes.OBSERVED_INPUT),
