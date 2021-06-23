@@ -295,4 +295,4 @@ if __name__ == "__main__":
     # expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
     # preprocess_sorgenia(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
     expt_config = ExperimentConfig('sotavento', './outputs/data/sotavento')
-    preprocess_sotavento(config=expt_config, source='anemometer')
+    preprocess_sotavento(config=expt_config, source='meteomatics')
