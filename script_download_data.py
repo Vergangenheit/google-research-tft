@@ -262,4 +262,4 @@ if __name__ == "__main__":
     # expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
     # preprocess_sorgenia(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
     expt_config = ExperimentConfig('sorgenia_wind', './outputs/data/sorgenia_wind')
-    preprocess_sorgenia('copernicus', expt_config)
+    preprocess_sorgenia_cop_mm(expt_config)

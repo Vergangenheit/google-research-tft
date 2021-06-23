@@ -41,7 +41,7 @@ def group_hourly(df: DataFrame) -> DataFrame:
     grouped: DataFrame = grouped.reset_index(drop=False).rename(columns={'start_date_utc': 'time'})
     #     grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'day', 'time'], ascending=True, ignore_index=True)
     grouped['time'] = grouped['day'].astype('str') + ' ' + grouped['time'].astype('str') + ':00:00'
-    grouped['time'] = grouped['time'].astype('datetime64[ns, UTC]')
+    grouped['time'] = grouped['time'].astype('datetime64[ns]')
     grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'time'], ascending=True, ignore_index=True)
     grouped.drop('day', axis=1, inplace=True)
 
