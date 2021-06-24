@@ -1337,12 +1337,12 @@ class TemporalFusionTransformer(object):
           selection weights, along with their identifiers and time indices
     """
 
-        data = self._batch_data(df)
+        data: Dict = self._batch_data(df)
         inputs = data['inputs']
         identifiers = data['identifier']
         time = data['time']
 
-        def get_batch_attention_weights(input_batch) -> Dict:
+        def get_batch_attention_weights(input_batch: ndarray) -> Dict:
             """Returns weights for a given minibatch of data."""
             input_placeholder = self._input_placeholder
             attention_weights = {}
