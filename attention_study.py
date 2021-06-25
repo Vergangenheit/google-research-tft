@@ -66,7 +66,7 @@ def extract_attention():
         att_weights: Dict = model.get_attention(test)
 
         with open(os.path.join(config.model_folder, "fixed", "attn_weights.pkl"), 'wb') as f:
-            pickle.dump(att_weights, f)
+            pickle.dump(att_weights, f, protocol=4)
 
 
 if __name__ == "__main__":
