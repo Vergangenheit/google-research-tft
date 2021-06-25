@@ -13,6 +13,7 @@ from typing import Optional
 from datetime import datetime
 from etl.ETL import db_connection, group_hourly, extract_weather, etl_plant, etl_weather
 
+
 # General functions for data downloading & aggregation.
 def download_from_url(url: str, output_path: str):
     """Downloads a file froma url."""
@@ -247,11 +248,13 @@ def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -
     df['categorical_hour']: Series = df['hour'].copy()
 
     # save df to csv file
+    df = df[df['plant_name_up'] == 'UP_MPNTLCDMRN_1']
     df.to_csv(config.data_csv_path, index=False)
     print(f'Saved in {config.data_csv_path}')
     print('Done.')
     if get_df:
         return df
+
 
 def preprocess_sotavento(config: ExperimentConfig, get_df: bool = False) -> Optional[DataFrame]:
     engine: Engine = db_connection()
@@ -290,4 +293,4 @@ if __name__ == "__main__":
     # expt_config = ExperimentConfig('erg_wind', './outputs/data/erg_wind')
     # preprocess_sorgenia(r'C:\Users\Lorenzo\PycharmProjects\TFT\outputs\data', expt_config)
     expt_config = ExperimentConfig('sorgenia_wind', './outputs/data/sorgenia_wind')
-    preprocess_sorgenia_cop_mm(expt_config, False)
+    preprocess_sorgenia_cop_mm(expt_config)
