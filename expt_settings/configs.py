@@ -91,4 +91,4 @@ class ExperimentConfig(object):
             'sotavento': SotaventoFormatter,
         }
 
-        return data_formatter_class[self.experiment](self.model_folder)
+        return data_formatter_class[self.experiment]()
