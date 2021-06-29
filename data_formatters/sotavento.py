@@ -74,7 +74,7 @@ class SotaventoFormatter(GenericDataFormatter):
 
         self.set_scalers(train)
         # save scalers to serialized format
-        self.save_scalers()
+        # self.save_scalers()
         return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df: DataFrame):
