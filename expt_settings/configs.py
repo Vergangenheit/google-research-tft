@@ -45,6 +45,7 @@ class ExperimentConfig(object):
         self.root_folder = root_folder
         self.experiment = experiment
         self.data_folder = os.path.join(root_folder, 'data', experiment, 'data')
+        print(self.data_folder)
         self.model_folder = root_folder
         self.results_folder = os.path.join(root_folder, 'results', experiment)
 
