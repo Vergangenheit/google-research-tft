@@ -47,7 +47,7 @@ class SotaventoFormatter(GenericDataFormatter):
         ('Year cos', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
     ]
 
-    def __init__(self, data_folder: str):
+    def __init__(self):
         """Initialises formatter."""
 
         self.identifiers = None
@@ -55,8 +55,8 @@ class SotaventoFormatter(GenericDataFormatter):
         self._cat_scalers = None
         self._target_scaler = None
         self._num_classes_per_cat_input = None
-        self.data_folder = data_folder
-        self.save_path: str = os.path.join(self.data_folder, "fixed")
+        # self.data_folder = data_folder
+        # self.save_path: str = os.path.join(self.data_folder, "fixed")
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
     def split_data(self, df: DataFrame) -> (DataFrame, DataFrame, DataFrame):
@@ -234,34 +234,34 @@ class SotaventoFormatter(GenericDataFormatter):
         """
         return 12061, 3349
 
-    def save_scalers(self):
-        """
-        This method saves the scalers into serialized format in order to re-use them for inference without having to
-        load the dataset and apply the split_data method to fit the scalers
-        :return: None
-        """
-
-        if not os.path.exists(os.path.join(self.data_folder, "scalers")):
-            os.makedirs(os.path.join(self.data_folder, "scalers"))
-        with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "wb") as real, open(
-                os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "wb") as cat, open(
-            os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "wb") as tar:
-            pickle.dump(self._real_scalers, real)
-            pickle.dump(self._cat_scalers, cat)
-            pickle.dump(self._target_scaler, tar)
-
-    def load_scalers(self):
-        """
-         Loads the saved scalers for inference
-        :return: None
-        """
-
-        if os.path.exists(os.path.join(self.data_folder, "scalers")):
-            with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "rb") as real, open(
-                    os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "rb") as cat, open(
-                os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "rb") as tar:
-                self._real_scalers = pickle.load(real)
-                self._cat_scalers = pickle.load(cat)
-                self._target_scaler = pickle.load(tar)
-        else:
-            raise ValueError('There are no saved scalers')
+    # def save_scalers(self):
+    #     """
+    #     This method saves the scalers into serialized format in order to re-use them for inference without having to
+    #     load the dataset and apply the split_data method to fit the scalers
+    #     :return: None
+    #     """
+    #
+    #     if not os.path.exists(os.path.join(self.data_folder, "scalers")):
+    #         os.makedirs(os.path.join(self.data_folder, "scalers"))
+    #     with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "wb") as real, open(
+    #             os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "wb") as cat, open(
+    #         os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "wb") as tar:
+    #         pickle.dump(self._real_scalers, real)
+    #         pickle.dump(self._cat_scalers, cat)
+    #         pickle.dump(self._target_scaler, tar)
+    #
+    # def load_scalers(self):
+    #     """
+    #      Loads the saved scalers for inference
+    #     :return: None
+    #     """
+    #
+    #     if os.path.exists(os.path.join(self.data_folder, "scalers")):
+    #         with open(os.path.join(self.data_folder, "scalers", "real_scalers.pkl"), "rb") as real, open(
+    #                 os.path.join(self.data_folder, "scalers", "cat_scalers.pkl"), "rb") as cat, open(
+    #             os.path.join(self.data_folder, "scalers", "target_scaler.pkl"), "rb") as tar:
+    #             self._real_scalers = pickle.load(real)
+    #             self._cat_scalers = pickle.load(cat)
+    #             self._target_scaler = pickle.load(tar)
+    #     else:
+    #         raise ValueError('There are no saved scalers')
