@@ -25,7 +25,7 @@ class ExperimentConfig(object):
       """
     default_experiments = ['volatility', 'electricity', 'traffic', 'favorita', 'erg_wind', 'sorgenia_wind', 'sotavento']
 
-    def __init__(self, experiment: str = 'volatility', root_folder=None):
+    def __init__(self, experiment: str = 'sotavento', root_folder=None):
         """Creates configs based on default experiment chosen.
     Args:
       experiment: Name of experiment.
