@@ -13,7 +13,7 @@ import pytz
 from etl.ETL import db_connection, group_hourly
 
 
-from constants import columns
+from inference.constants import columns
 
 
 class GetData:
