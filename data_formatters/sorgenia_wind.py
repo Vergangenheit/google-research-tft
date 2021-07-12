@@ -77,6 +77,11 @@ class SorgeniaFormatter(GenericDataFormatter):
         self.save_scalers()
         return (self.transform_inputs(data) for data in [train, valid, test])
 
+    def scale_data(self, sample: DataFrame) -> DataFrame:
+        self.load_scalers()
+        return self.transform_inputs(sample)
+
+
     def set_scalers(self, df: DataFrame):
         """Calibrates scalers using the data supplied.
             Args:

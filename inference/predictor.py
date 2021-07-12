@@ -44,6 +44,7 @@ class MyPredictor(object):
             self.params.pop('exp_name', None)
             self.params.pop('data_folder', None)
             self.model.load(os.path.join(self.config.model_folder, "fixed"), use_keras_loadings=False)
+            instances: DataFrame = self.formatter.scale_data(instances)
             output_map: Dict = self.model.predict(instances, return_targets=False)
             # Extract predictions for each quantile into different entries
             preds: DataFrame = self.formatter.format_predictions(output_map.get("p50"))

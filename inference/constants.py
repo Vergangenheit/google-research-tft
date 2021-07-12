@@ -1,7 +1,7 @@
 sorgenia_farms = ['UP_PRCLCDPLRM_1', 'UP_PRCLCDMZRD_1', 'UP_PRCLCDPRZZ_1', 'UP_PRCLCMINEO_1', 'UP_PEPIZZA_1',
                   'UP_MPNTLCSMBC_1', 'UP_MPNTLCDMRN_1']
 
-columns = ['plant_code', 'time', 'dew_point_2m_C', 'temperature_2m_C', 'msl_pressure_hPa', 'sfc_pressure_hPa',
+columns = ['plant_code', 'time', 'kwh', 'dew_point_2m_C', 'temperature_2m_C', 'msl_pressure_hPa', 'sfc_pressure_hPa',
            'precipitation_1h_mm', 'wind_speed_mean_10m_1h_ms',
            'wind_speed_mean_100m_1h_ms', 'wind_dir_mean_100m_1h_d', 'wind_dir_mean_10m_1h_d', 'wind_gusts_10m_1h_ms',
            'wind_gusts_10m_ms']

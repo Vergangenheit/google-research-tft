@@ -10,7 +10,7 @@ import datetime as dt
 import numpy as np
 from numpy import ndarray
 import pytz
-from etl.ETL import db_connection
+from etl.ETL import db_connection, group_hourly
 
 
 from constants import columns
@@ -63,8 +63,8 @@ class GetData:
         observed_df: DataFrame = pd.concat([self.observed_df1, self.observed_df2], axis=0, ignore_index=True)
         observed_df: DataFrame = observed_df.sort_values(by=['time', 'plant_code'], ascending=True,
                                                          ignore_index=True)
-        observed_df: DataFrame = observed_df[observed_df['plant_code'].isin(self.farm_list)]
-        self.observed_df = observed_df[columns]
+        self.observed_df: DataFrame = observed_df[observed_df['plant_code'].isin(self.farm_list)]
+        # self.observed_df = observed_df[columns]
 
     def known_inputs(self):
         """table: "meteomatics_forecast_weather"
@@ -81,12 +81,25 @@ class GetData:
         known_df.drop(['timestamp_query_utc'], axis=1, inplace=True)
         known_df: DataFrame = known_df[known_df['plant_code'].isin(self.farm_list)]
         known_df.rename(columns={'forecast_timestamp_utc': 'time'}, inplace=True)
+        known_df['kwh'] = np.nan
         self.known_df = known_df[columns]
+
+    def extract_targets(self):
+        query_tar: str = "SELECT * FROM sorgenia_energy WHERE start_date_utc >= '{}' and end_date_utc < '{}'"
+        past_targets: DataFrame = pd.read_sql_query(query_tar.format(self.start, self.end), con=db_connection())
+        past_targets: DataFrame = group_hourly(past_targets)
+        past_targets: DataFrame = past_targets[past_targets['plant_name_up'].isin(self.farm_list)]
+        self.observed_df = self.observed_df.merge(past_targets, how='left', left_on=['plant_code', 'time'],
+                                        right_on=['plant_name_up', 'time'])
+        self.observed_df['kwh'] = self.observed_df['kwh'].fillna(method='ffill')
+        self.observed_df.drop(['plant_name_up'], axis=1, inplace=True)
+        self.observed_df = self.observed_df[columns]
 
     def generate(self) -> DataFrame:
         self.observed_inputs1()
         self.observed_inputs2()
         self.concat_observed()
+        self.extract_targets()
         self.known_inputs()
         df: DataFrame = pd.concat([self.observed_df, self.known_df], axis=0, ignore_index=True)
         df = df.sort_values(['plant_code', 'time'], ascending=True, ignore_index=True)
@@ -108,6 +121,7 @@ class GetData:
         df['hour']: Series = df["time"].dt.hour
         df['day_of_week']: Series = df["time"].dt.dayofweek
         df['categorical_id']: Series = df['id'].copy()
+        df['kwh'].fillna(method='ffill', inplace=True)
 
         return df
 
@@ -116,3 +130,4 @@ if __name__ == "__main__":
     getdata = GetData()
     df = getdata.generate()
     print(df)
+    print(df.columns)
