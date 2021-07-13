@@ -1306,7 +1306,7 @@ class TemporalFusionTransformer(object):
                 prediction[:, :, 0],
                 columns=[
                     't+{}'.format(i)
-                    for i in range(self.time_steps - self.num_encoder_steps)
+                    for i in range(1, self.time_steps - self.num_encoder_steps + 1)
                 ])
             cols = list(flat_prediction.columns)
             flat_prediction['forecast_time'] = time[:, self.num_encoder_steps - 1, 0]

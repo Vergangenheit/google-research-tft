@@ -6,7 +6,7 @@ import tensorflow.compat.v1 as tf1
 from tensorflow import Graph
 from tensorflow.compat.v1 import Session, ConfigProto
 from tensorflow.python.eager.context import PhysicalDevice
-from typing import Dict, List, Union, Generator, Tuple, TypeVar, Type
+from typing import Dict, List, Union, Generator, Tuple, TypeVar, Type, Optional
 import os
 from numpy import load, ndarray
 import time
@@ -28,7 +28,7 @@ class MyPredictor(object):
         self.config = config
         print('Done.')
 
-    def predict(self, instances: DataFrame, **kwargs) -> List[Tuple]:
+    def predict(self, instances: DataFrame, **kwargs) -> DataFrame:
         t0: float = time.perf_counter()
         if tf.test.gpu_device_name():
             print('Default GPU Device:{}'.format(tf.test.gpu_device_name()))
@@ -52,7 +52,7 @@ class MyPredictor(object):
         t1: float = time.perf_counter()
         print("Time elapsed ", t1 - t0)
 
-        return [tuple(x) for x in preds.to_numpy()]
+        return preds
 
     @classmethod
     def from_path(cls: Type[_T], model_dir: str) -> _T:

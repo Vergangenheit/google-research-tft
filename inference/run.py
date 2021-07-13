@@ -30,6 +30,7 @@ from expt_settings.configs import ExperimentConfig
 from libs.hyperparam_opt import HyperparamOptManager
 from libs.tft_model import TemporalFusionTransformer
 import libs.utils as utils
+import json
 
 
 def main(model_path: str):
@@ -39,7 +40,7 @@ def main(model_path: str):
     # instantiate predictor
     predictor = MyPredictor.from_path(model_path)
     # testing Predictor on sample
-    preds: List = predictor.predict(df)
+    preds: DataFrame = predictor.predict(df)
 
     print(preds)
 
