@@ -187,11 +187,11 @@ class SorgeniaFormatter(GenericDataFormatter):
 
         column_names = predictions.columns
         df_list = []
-        for identifier, sliced in predictions.groupby('identifier'):
+        for identifier, sliced in predictions.groupby('plant_name_up'):
             sliced_copy = sliced.copy()
             target_scaler = self._target_scaler[identifier]
             for col in column_names:
-                if col not in {'forecast_time', 'identifier'}:
+                if col not in {'forecast_date_utc', 'plant_name_up'}:
                     sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
             df_list.append(sliced_copy)
 

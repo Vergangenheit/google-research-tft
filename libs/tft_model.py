@@ -1305,15 +1305,15 @@ class TemporalFusionTransformer(object):
             flat_prediction = pd.DataFrame(
                 prediction[:, :, 0],
                 columns=[
-                    't+{}'.format(i)
+                    't_{}'.format(i)
                     for i in range(1, self.time_steps - self.num_encoder_steps + 1)
                 ])
             cols = list(flat_prediction.columns)
-            flat_prediction['forecast_time'] = time[:, self.num_encoder_steps - 1, 0]
-            flat_prediction['identifier'] = identifier[:, 0, 0]
+            flat_prediction['forecast_date_utc'] = time[:, self.num_encoder_steps - 1, 0]
+            flat_prediction['plant_name_up'] = identifier[:, 0, 0]
 
             # Arrange in order
-            return flat_prediction[['forecast_time', 'identifier'] + cols]
+            return flat_prediction[['forecast_date_utc', 'plant_name_up'] + cols]
 
         # Extract predictions for each quantile into different entries
         process_map: Dict = {
