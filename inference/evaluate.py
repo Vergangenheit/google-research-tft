@@ -100,7 +100,7 @@ def boxplotter(df: DataFrame) -> Figure:
     fig: Figure = go.Figure()
     # loop over horizons
     for hz in df.columns[2:]:
-        horizon: int = int(hz.split('+')[-1]) + 1
+        horizon: int = int(hz.split('t')[-1])
         fig.add_trace(go.Box(y=df[hz], name=f'{str(horizon)}h'))
 
     fig.update_layout(width=1000, height=500, title="Mape Comparison across prediction horizons",

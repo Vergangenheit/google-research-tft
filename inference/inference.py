@@ -7,9 +7,10 @@ import numpy as np
 import pytz
 from etl.ETL import db_connection, group_hourly
 
-from constants import columns, sorgenia_farms, preds_query_interim, query_energy
+from inference.constants import columns, sorgenia_farms, preds_query_interim, query_energy
 # from inference.mape import rolling_mape
-from utils import shift_lags
+from inference.utils import shift_lags
+
 
 class GetData:
     def __init__(self):
@@ -114,7 +115,7 @@ class GetData:
 
         earliest_time: Timestamp = df.time.min()
         df['hours_from_start']: Series = (df['time'] - earliest_time).dt.seconds / 60 / 60 + (
-                    df['time'] - earliest_time).dt.days * 24
+                df['time'] - earliest_time).dt.days * 24
         df["id"] = df["plant_code"]
         df['hour']: Series = df["time"].dt.hour
         df['day_of_week']: Series = df["time"].dt.dayofweek
@@ -125,7 +126,18 @@ class GetData:
 
 
 class GetDataMape:
+    """class to contain queries and preprocessing data from prediction table and real energy table for prediction
+    performance """
+
     def __init__(self, last_months: int, preds_table: str, truth_table: str, preds_query: str, query_energy: str):
+        """
+
+        :param last_months (int): pick how many recent months to assess
+        :param preds_table (str): predictions table in database
+        :param truth_table (str): ground truths table in database
+        :param preds_query (str): query to extract from predictions table
+        :param query_energy (str): query to extract from truths table
+        """
         self.n = last_months
         self.preds_table = preds_table
         self.truth_table = truth_table
@@ -134,6 +146,10 @@ class GetDataMape:
         self.query_energy = query_energy
 
     def extract_preds(self) -> DataFrame:
+        """
+        extract predictions and returns them preprocessed ready for rolling mape function
+        :return: DataFrame
+        """
         preds: DataFrame = pd.read_sql_query(self.preds_query.format(self.preds_table, self.n - 1), con=db_connection())
         # gather min and max dates to match with energy query
         self.lower = preds['forecast_time_utc'].min().strftime("%Y-%m-%d %H:%M:%S")
@@ -143,6 +159,10 @@ class GetDataMape:
         return preds
 
     def extract_truths(self) -> DataFrame:
+        """
+        extracts and preprocesses real energy data for mape function
+        :return: DataFrame
+        """
         df_energy: DataFrame = pd.read_sql_query(self.query_energy.format(self.truth_table, self.lower, self.upper),
                                                  con=db_connection())
         df_energy: DataFrame = group_hourly(df_energy)
@@ -161,16 +181,17 @@ class GetDataMape:
         return df_energy
 
     def generate(self) -> (DataFrame, DataFrame):
+        """
+        method to put everything together
+        :return: predictions df and truths df
+        """
         preds: DataFrame = self.extract_preds()
         truths: DataFrame = self.extract_truths()
 
         return preds, truths
-
 
 # if __name__ == "__main__":
 #     getdata = GetDataMape(last_months=3, preds_table='tft_testset_preds', truth_table='sorgenia_energy', preds_query=preds_query_interim, query_energy=query_energy)
 #     preds, truths = getdata.generate()
 #     df_mape: DataFrame = rolling_mape(truths, preds, 700, 'forecast_time_utc', 'plant_name_up')
 #     print(df_mape.iloc[:, 2:].mean().mean())
-
-
