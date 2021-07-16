@@ -41,7 +41,7 @@ def main(model_path: str):
     predictor = MyPredictor.from_path(model_path)
     # testing Predictor on sample
     preds: DataFrame = predictor.predict(df)
-    preds.to_csv(os.path.join(model_path, 'preds.csv'), index=False)
+
     print(preds)
 
 

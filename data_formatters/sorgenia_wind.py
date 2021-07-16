@@ -81,7 +81,6 @@ class SorgeniaFormatter(GenericDataFormatter):
         self.load_scalers()
         return self.transform_inputs(sample)
 
-
     def set_scalers(self, df: DataFrame):
         """Calibrates scalers using the data supplied.
             Args:
@@ -251,7 +250,9 @@ class SorgeniaFormatter(GenericDataFormatter):
         # save all the scalers
         if not os.path.exists(os.path.join(self.save_path, "scalers")):
             os.makedirs(os.path.join(self.save_path, "scalers"))
-        with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "wb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "wb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "wb") as tar:
+        with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "wb") as real, open(
+                os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "wb") as cat, open(
+                os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "wb") as tar:
             pickle.dump(self._real_scalers, real)
             pickle.dump(self._cat_scalers, cat)
             pickle.dump(self._target_scaler, tar)
@@ -262,11 +263,11 @@ class SorgeniaFormatter(GenericDataFormatter):
         :return: None
         """
         if os.path.exists(os.path.join(self.save_path, "scalers")):
-            with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "rb") as real, open(os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "rb") as cat, open(os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "rb") as tar:
+            with open(os.path.join(self.save_path, "scalers", "real_scalers.pkl"), "rb") as real, open(
+                    os.path.join(self.save_path, "scalers", "cat_scalers.pkl"), "rb") as cat, open(
+                    os.path.join(self.save_path, "scalers", "target_scaler.pkl"), "rb") as tar:
                 self._real_scalers = pickle.load(real)
                 self._cat_scalers = pickle.load(cat)
                 self._target_scaler = pickle.load(tar)
         else:
             raise ValueError('There are no saved scalers')
-
-

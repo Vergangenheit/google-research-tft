@@ -1,20 +1,15 @@
-from sqlalchemy.engine import Engine, Connection
-from sqlalchemy import create_engine
-from os import getenv
-from typing import List, Dict, Optional
+from typing import List
 import pandas as pd
 from pandas import DataFrame, Series, Timestamp
-import matplotlib.pyplot as plt
 from datetime import datetime
 import datetime as dt
 import numpy as np
-from numpy import ndarray
 import pytz
 from etl.ETL import db_connection, group_hourly
 
-
-from constants import columns
-
+from constants import columns, sorgenia_farms, preds_query_interim, query_energy
+# from inference.mape import rolling_mape
+from utils import shift_lags
 
 class GetData:
     def __init__(self):
@@ -75,6 +70,8 @@ class GetData:
         known_df.drop(['id'], axis=1, inplace=True)
         known_df: DataFrame = known_df.sort_values(by=['forecast_timestamp_utc', 'plant_code'], ascending=True,
                                                    ignore_index=True)
+        # pay attention to the following two lines (given the nature of forecasts acquisition,
+        # we need to take the latest update among the various copies
         known_df['diff'] = known_df['forecast_timestamp_utc'] - known_df['timestamp_query_utc']
         known_df = known_df.sort_values('diff', ascending=True).drop_duplicates(
             subset=['plant_code', 'forecast_timestamp_utc'], keep='first')
@@ -90,7 +87,7 @@ class GetData:
         past_targets: DataFrame = group_hourly(past_targets)
         past_targets: DataFrame = past_targets[past_targets['plant_name_up'].isin(self.farm_list)]
         self.observed_df = self.observed_df.merge(past_targets, how='left', left_on=['plant_code', 'time'],
-                                        right_on=['plant_name_up', 'time'])
+                                                  right_on=['plant_name_up', 'time'])
         self.observed_df['kwh'] = self.observed_df['kwh'].fillna(method='ffill')
         self.observed_df.drop(['plant_name_up'], axis=1, inplace=True)
         self.observed_df = self.observed_df[columns]
@@ -116,7 +113,8 @@ class GetData:
         df['Year cos']: Series = np.cos(timestamp_s * (2 * np.pi / year))
 
         earliest_time: Timestamp = df.time.min()
-        df['hours_from_start']: Series = (df['time'] - earliest_time).dt.seconds / 60 / 60 + (df['time'] - earliest_time).dt.days * 24
+        df['hours_from_start']: Series = (df['time'] - earliest_time).dt.seconds / 60 / 60 + (
+                    df['time'] - earliest_time).dt.days * 24
         df["id"] = df["plant_code"]
         df['hour']: Series = df["time"].dt.hour
         df['day_of_week']: Series = df["time"].dt.dayofweek
@@ -126,8 +124,53 @@ class GetData:
         return df
 
 
-if __name__ == "__main__":
-    getdata = GetData()
-    df = getdata.generate()
-    print(df)
-    print(df.columns)
+class GetDataMape:
+    def __init__(self, last_months: int, preds_table: str, truth_table: str, preds_query: str, query_energy: str):
+        self.n = last_months
+        self.preds_table = preds_table
+        self.truth_table = truth_table
+        self.farm_list = sorgenia_farms
+        self.preds_query = preds_query
+        self.query_energy = query_energy
+
+    def extract_preds(self) -> DataFrame:
+        preds: DataFrame = pd.read_sql_query(self.preds_query.format(self.preds_table, self.n - 1), con=db_connection())
+        # gather min and max dates to match with energy query
+        self.lower = preds['forecast_time_utc'].min().strftime("%Y-%m-%d %H:%M:%S")
+        self.upper = (preds['forecast_time_utc'].max() + pd.Timedelta(hours=12)).strftime("%Y-%m-%d %H:%M:%S")
+        preds.sort_values(by=['identifier', 'forecast_time_utc'], ascending=True, ignore_index=True, inplace=True)
+
+        return preds
+
+    def extract_truths(self) -> DataFrame:
+        df_energy: DataFrame = pd.read_sql_query(self.query_energy.format(self.truth_table, self.lower, self.upper),
+                                                 con=db_connection())
+        df_energy: DataFrame = group_hourly(df_energy)
+        df_energy: DataFrame = df_energy[df_energy['plant_name_up'].isin(self.farm_list)]
+        lower_en = df_energy['time'].min().strftime("%Y-%m-%d %H:%M:%S")
+        upper_en = df_energy['time'].max().strftime("%Y-%m-%d %H:%M:%S")
+        assert lower_en == self.lower
+        assert upper_en == self.upper
+        # rearrange df_energy into lagged schema
+        df_energy: DataFrame = df_energy.groupby(by='plant_name_up').apply(shift_lags, 12, 'kwh')
+        df_energy.index = df_energy.index.droplevel(0)
+        df_energy.drop(['kwh'], axis=1, inplace=True)
+        # make sure they're sorted for mape calculation
+        df_energy.sort_values(by=['plant_name_up', 'time'], ascending=True, ignore_index=True, inplace=True)
+
+        return df_energy
+
+    def generate(self) -> (DataFrame, DataFrame):
+        preds: DataFrame = self.extract_preds()
+        truths: DataFrame = self.extract_truths()
+
+        return preds, truths
+
+
+# if __name__ == "__main__":
+#     getdata = GetDataMape(last_months=3, preds_table='tft_testset_preds', truth_table='sorgenia_energy', preds_query=preds_query_interim, query_energy=query_energy)
+#     preds, truths = getdata.generate()
+#     df_mape: DataFrame = rolling_mape(truths, preds, 700, 'forecast_time_utc', 'plant_name_up')
+#     print(df_mape.iloc[:, 2:].mean().mean())
+
+

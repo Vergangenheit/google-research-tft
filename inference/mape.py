@@ -61,7 +61,7 @@ def rolling_mape_multitarget(targets_df: DataFrame, preds_df: DataFrame, hours_m
     return df_mape_final
 
 
-def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int, hz: str) -> DataFrame:
+def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int, hz: str, time_col: str, up_col: str) -> DataFrame:
     """
 
     :param targets_df: DataFrame (dataframe of ground truths)
@@ -71,12 +71,12 @@ def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: i
     :return: DataFrame (with a time and identifier fields and a column for the prediction based on hz)
     """
     df_mape: DataFrame = pd.DataFrame(
-        data={'forecast_time': preds_df['forecast_time'], 'identifier': preds_df['identifier'], 'true': targets_df[hz],
+        data={time_col: preds_df[time_col], 'identifier': preds_df['identifier'], 'true': targets_df[hz],
               'preds': preds_df[hz]})
     df_mape['abs(Pred-true)']: Series = np.abs(df_mape['preds'] - df_mape['true'])
     # loop over up
     count_up = 0
-    for up in targets_df.identifier.unique():
+    for up in targets_df[up_col].unique():
         if count_up == 0:
             df_mape_up = df_mape[df_mape['identifier'] == up]
             d: List = []
@@ -88,7 +88,7 @@ def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: i
                 # prendere la data del inizio di intervallo
             p: List = []
             for i in range(0, df_mape_up.shape[0] - hours_mape):
-                f: Union[str, Timestamp] = df_mape_up['forecast_time'].iloc[i]
+                f: Union[str, Timestamp] = df_mape_up[time_col].iloc[i]
                 p.append(f)
             #         assert len(p) == len(d)
 
@@ -105,7 +105,7 @@ def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: i
                 # prendere la data del inizio di intervallo
             p: List = []
             for i in range(0, df_mape_up.shape[0] - hours_mape):
-                f: Union[str, Timestamp] = df_mape_up['forecast_time'].iloc[i]
+                f: Union[str, Timestamp] = df_mape_up[time_col].iloc[i]
                 p.append(f)
             #         assert len(p) == len(d)
 
@@ -117,7 +117,7 @@ def process_mape_by_hz(targets_df: DataFrame, preds_df: DataFrame, hours_mape: i
     return df_mape_final
 
 
-def rolling_mape(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int) -> DataFrame:
+def rolling_mape(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int, time_col: str, up_col: str) -> DataFrame:
     """
 
     :param targets_df: DataFrame (dataframe of ground truths)
@@ -128,10 +128,10 @@ def rolling_mape(targets_df: DataFrame, preds_df: DataFrame, hours_mape: int) ->
     count = 0
     for mt in targets_df.columns[2:]:
         if count == 0:
-            df_mape_final: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
+            df_mape_final: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt, time_col, up_col)
             count += 1
         else:
-            df_mape_interim: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt)
+            df_mape_interim: DataFrame = process_mape_by_hz(targets_df, preds_df, hours_mape, mt, time_col, up_col)
             df_mape_final[f'mape_{mt}'] = df_mape_interim[f'mape_{mt}']
             count += 1
 

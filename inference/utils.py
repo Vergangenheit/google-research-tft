@@ -63,3 +63,14 @@ def pivot(df: DataFrame) -> DataFrame:
     df_piv2.reset_index(drop=True, inplace=True)
 
     return df_piv2
+
+
+def shift_lags(df: DataFrame, n_lags: int, col: str) -> DataFrame:
+    """transforms single column dataframe into lagged version"""
+    df1 = df.copy()
+    for i in range(1, n_lags + 1):
+        df1[f't{str(i)}'] = df1[col].shift(-i)
+    # drop nans
+    df1.dropna(axis=0, how='any', inplace=True)
+
+    return df1
