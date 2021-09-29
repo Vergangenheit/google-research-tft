@@ -1,5 +1,6 @@
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from os import getenv
 from typing import List, Dict, Optional
 import pandas as pd
@@ -27,7 +28,7 @@ def db_connection() -> Engine:
 
     postgres_str: str = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
 
-    engine: Engine = create_engine(postgres_str)
+    engine: Engine = create_engine(postgres_str, poolclass=NullPool)
 
     return engine
 
@@ -39,7 +40,7 @@ def group_hourly(df: DataFrame) -> DataFrame:
                             'start_date_utc'].dt.day.astype('str')
     df['day']: Series = pd.to_datetime(df['day'], infer_datetime_format=True)
     grouped: DataFrame = df.groupby(['plant_name_up', 'day', df.start_date_utc.dt.hour]).agg(
-        {'kwh': 'mean'})
+        {'kwh': 'sum'})
     grouped: DataFrame = grouped.reset_index(drop=False).rename(columns={'start_date_utc': 'time'})
     #     grouped: DataFrame = grouped.sort_values(by=['plant_name_up', 'day', 'time'], ascending=True, ignore_index=True)
     grouped['time'] = grouped['day'].astype('str') + ' ' + grouped['time'].astype('str') + ':00:00'

@@ -8,6 +8,7 @@ from pandas import DataFrame, Series, Timestamp, Index
 from numpy import ndarray
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from os import getenv
 from typing import Optional
 from datetime import datetime
