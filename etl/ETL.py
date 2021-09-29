@@ -59,6 +59,7 @@ def extract_weather(weather_sql: str, engine: Engine) -> DataFrame:
 
     return weather_df
 
+
 def overlap(row: Series) -> str:
     if math.isnan(row['speed_ms']) and math.isnan(row['energy_kwh']):
         return 'yes'
@@ -126,6 +127,7 @@ def etl_plant(sql_energy: str, engine: Engine) -> DataFrame:
     data_reduced: DataFrame = down_sample(data)
 
     return data_reduced
+
 
 def etl_weather(engine: Engine) -> DataFrame:
     data: DataFrame = pd.read_sql_query("SELECT * FROM pala_spain", con=engine)

@@ -206,7 +206,7 @@ if __name__ == "__main__":
             metavar="e",
             type=str,
             nargs="?",
-            default="sotavento",
+            default="sorgenia_wind",
             choices=experiment_names,
             help="Experiment Name. Default={}".format(",".join(experiment_names))
         )
