@@ -1,5 +1,6 @@
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from os import getenv
 from typing import List, Dict, Optional
 import pandas as pd
@@ -25,7 +26,7 @@ def db_connection() -> Engine:
 
     postgres_str: str = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
 
-    engine: Engine = create_engine(postgres_str)
+    engine: Engine = create_engine(postgres_str, poolclass=NullPool)
 
     return engine
 
