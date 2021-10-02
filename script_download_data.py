@@ -249,7 +249,7 @@ def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -
     df['categorical_hour']: Series = df['hour'].copy()
 
     # save df to csv file
-    df = df[df['plant_name_up'] == 'UP_MPNTLCDMRN_1']
+    # df = df[df['plant_name_up'] == 'UP_MPNTLCDMRN_1']
     df.to_csv(config.data_csv_path, index=False)
     print(f'Saved in {config.data_csv_path}')
     print('Done.')
