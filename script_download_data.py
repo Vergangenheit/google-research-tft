@@ -211,7 +211,7 @@ def preprocess_sorgenia_cop_mm(config: ExperimentConfig, get_df: bool = False) -
     engine: Engine = db_connection()
     sql_energy: str = "SELECT * FROM sorgenia_energy"
     energy_df: DataFrame = pd.read_sql_query(sql_energy, con=engine)
-    energy_grouped: DataFrame = group_hourly(energy_df)
+    energy_grouped: DataFrame = group_hourly(energy_df, 'start_date_utc', 'plant_name_up')
     # extract weather copernicus
     mm_query: str = "SELECT * FROM sorgenia_weather"
     weather_df: DataFrame = extract_weather(mm_query, engine)

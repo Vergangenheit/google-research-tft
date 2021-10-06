@@ -33,7 +33,7 @@ def db_connection() -> Engine:
     return engine
 
 
-def group_hourly(df: DataFrame) -> DataFrame:
+def group_hourly_old(df: DataFrame) -> DataFrame:
     df: DataFrame = df.copy()
     df['day']: Series = df['start_date_utc'].dt.year.astype('str') + '-' + df['start_date_utc'].dt.month.astype(
         'str') + '-' + df[
@@ -49,6 +49,19 @@ def group_hourly(df: DataFrame) -> DataFrame:
     grouped.drop('day', axis=1, inplace=True)
 
     return grouped
+
+
+def group_hourly(df: DataFrame, time_col: str, up_col: str) -> DataFrame:
+    """downsample sorgenia_energy data from quarter to hour"""
+    df1: DataFrame = df.copy()
+    df1.set_index(time_col, drop=True, inplace=True)
+    df1.drop(['end_date_utc'], axis=1, inplace=True)
+    df1.sort_values(by=[up_col, time_col], inplace=True)
+    energy_grouped = df1.groupby(up_col).resample('1H', label='right').sum()
+    energy_grouped.reset_index(drop=False, inplace=True)
+    energy_grouped.rename(columns={time_col: 'time'}, inplace=True)
+
+    return energy_grouped
 
 
 def extract_weather(weather_sql: str, engine: Engine) -> DataFrame:
