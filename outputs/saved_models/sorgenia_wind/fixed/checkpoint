@@ -1,2 +1,2 @@
-model_checkpoint_path: "/home/lorenzo/google-research-tft/outputs/saved_models/sorgenia_wind/fixed/TemporalFusionTransformer.ckpt"
-all_model_checkpoint_paths: "/home/lorenzo/google-research-tft/outputs/saved_models/sorgenia_wind/fixed/TemporalFusionTransformer.ckpt"
+model_checkpoint_path: "/home/lorenzo/google-research-tft/outputs/fixed/TemporalFusionTransformer.ckpt"
+all_model_checkpoint_paths: "/home/lorenzo/google-research-tft/outputs/fixed/TemporalFusionTransformer.ckpt"
