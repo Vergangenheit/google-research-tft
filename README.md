@@ -2,6 +2,9 @@
 
 Putting the awesome code from https://github.com/google-research/google-research/tree/master/tft in a separate standalone repository to dig through it.
 
+**THIS REPO IS MAINLY FOR TRAINING PURPOSES**
+
+The model is then deployed in https://gitlab.com/omnienergysrl/ml-data-science/production-prediction-vulcanodon 
 
 **INFERENCE-PREDICTION**:
 
@@ -9,7 +12,7 @@ The main function in script_train_fixed_params.py is configured to run the predi
 
 Example:
 
-savedmodels_sorgenia_wind_mm+cop/
+./outputs/fixed
 
 ├── checkpoint
 
