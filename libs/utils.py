@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf1
-from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import ConfigProto, Session
 from tensorflow import Tensor
 from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 from typing import List, Set, Type, Union
@@ -132,7 +132,7 @@ def get_default_tensorflow_config(tf_device: str = 'gpu', gpu_id: int = 0) -> Co
     return tf_config
 
 
-def save(tf_session, model_folder, cp_name, scope=None):
+def save(tf_session: Session, model_folder: str, cp_name: str, scope: str = None):
     """Saves Tensorflow graph to checkpoint.
   Saves all trainiable variables under a given variable scope to checkpoint.
   Args:
@@ -145,7 +145,7 @@ def save(tf_session, model_folder, cp_name, scope=None):
     if scope is None:
         saver = tf1.train.Saver()
     else:
-        var_list = tf1.get_collection(tf1.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
+        var_list: List = tf1.get_collection(tf1.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
         saver = tf1.train.Saver(var_list=var_list, max_to_keep=100000)
 
     save_path = saver.save(tf_session,
@@ -153,7 +153,7 @@ def save(tf_session, model_folder, cp_name, scope=None):
     print('Model saved to: {0}'.format(save_path))
 
 
-def load(tf_session, model_folder, cp_name, scope=None, verbose=False):
+def load(tf_session: Session, model_folder: str, cp_name: str, scope: str =None, verbose: bool =False, print_weights: bool = False):
     """Loads Tensorflow graph from checkpoint.
   Args:
     tf_session: Session to load graph into
@@ -163,11 +163,12 @@ def load(tf_session, model_folder, cp_name, scope=None, verbose=False):
     verbose: Whether to print additional debugging information.
   """
     # Load model proper
-    load_path = os.path.join(model_folder, '{0}.ckpt'.format(cp_name))
+    load_path: str = os.path.join(model_folder, '{0}.ckpt'.format(cp_name))
 
     print('Loading model from {0}'.format(load_path))
 
-    print_weights_in_checkpoint(model_folder, cp_name)
+    if print_weights:
+        print_weights_in_checkpoint(model_folder, cp_name)
 
     initial_vars = set(
         [v.name for v in tf1.get_default_graph().as_graph_def().node])

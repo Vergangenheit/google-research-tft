@@ -20,6 +20,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, TimeDistributed, Input, LSTM
 from tensorflow import Tensor
 from tensorflow.python.data import Dataset
+from tensorflow.keras import Model
 
 # Layer definitions.
 concat = tf.keras.backend.concatenate
@@ -399,6 +400,7 @@ class TemporalFusionTransformer(object):
         self.time_steps = int(params['total_time_steps'])
         self.input_size = int(params['input_size'])
         self.output_size = int(params['output_size'])
+        print("category counts are ", str(params['category_counts']))
         self.category_counts = json.loads(str(params['category_counts']))
         self.n_multiprocessing_workers = int(params['multiprocessing_workers'])
         # self.data_folder: str = params['data_folder']
@@ -449,7 +451,7 @@ class TemporalFusionTransformer(object):
         # Build model
         self.model = self.build_model()
 
-    def get_tft_embeddings(self, all_inputs):
+    def get_tft_embeddings(self, all_inputs: Tensor) -> (Tensor, Tensor, Tensor, Tensor):
         """Transforms raw inputs to embeddings.
             Applies linear transformation onto continuous variables and uses embeddings
             for categorical variables.
@@ -929,7 +931,7 @@ class TemporalFusionTransformer(object):
         lstm_layer: Tensor = concat([history_lstm, future_lstm], axis=1)
 
         # Apply gated skip connection
-        input_embeddings = concat([historical_features, future_features], axis=1)
+        input_embeddings: Tensor = concat([historical_features, future_features], axis=1)
 
         lstm_layer, _ = apply_gating_layer(
             lstm_layer, self.hidden_layer_size, self.dropout_rate, activation=None)
@@ -987,7 +989,7 @@ class TemporalFusionTransformer(object):
 
         return transformer_layer, all_inputs, attention_components
 
-    def build_model(self):
+    def build_model(self) -> Model:
         """Build model and defines training losses.
         Returns:
           Fully defined Keras model.
@@ -1027,7 +1029,7 @@ class TemporalFusionTransformer(object):
                   """
                     self.quantiles = quantiles
 
-                def quantile_loss(self, a, b):
+                def quantile_loss(self, a: Tensor, b: Tensor):
                     """Returns quantile loss for specified quantiles.
                       Args:
                         a: Targets
@@ -1061,6 +1063,9 @@ class TemporalFusionTransformer(object):
 
         print('*** Fitting {} ***'.format(self.name))
         file_path: str = os.path.join(self.saved_models_folder, f"{self.exp_name}" + "_ckpt.hdf5")
+        # if os.path.exists(file_path):
+        #     print(f"Loading model from {file_path}")
+        #     self.load('', use_keras_loadings=True)
         # Add relevant callbacks
         callbacks: List = [
             tf.keras.callbacks.EarlyStopping(
@@ -1150,9 +1155,10 @@ class TemporalFusionTransformer(object):
         training_dataset: Dataset = tf.data.Dataset.from_generator(traindata_gen,
                                                                    output_types=(tf.float32, tf.float32, tf.float32),
                                                                    output_shapes=(
-                                                                   tf.TensorShape([None, data_size[1], data_size[2]]),
-                                                                   tf.TensorShape([None, label_size[1], 3]),
-                                                                   tf.TensorShape([None, flag_size[1]]),
+                                                                       tf.TensorShape(
+                                                                           [None, data_size[1], data_size[2]]),
+                                                                       tf.TensorShape([None, label_size[1], 3]),
+                                                                       tf.TensorShape([None, flag_size[1]]),
                                                                    )
                                                                    )
         training_dataset: Dataset = training_dataset.apply(tf.data.experimental.unbatch())
@@ -1182,7 +1188,7 @@ class TemporalFusionTransformer(object):
                                                                                          3]),
                                                                                     tf.TensorShape(
                                                                                         [None, flag_size[1]]),
-                                                                                    )
+                                                                     )
                                                                      )
         self.valid_dataset: Dataset = self.valid_dataset.apply(tf.data.experimental.unbatch())
         self.valid_dataset: Dataset = self.valid_dataset.batch(self.minibatch_size)
@@ -1266,7 +1272,7 @@ class TemporalFusionTransformer(object):
 
         return metrics[eval_metric]
 
-    def predict(self, df: DataFrame, return_targets=False) -> Dict:
+    def predict(self, df: DataFrame, return_targets: bool = False) -> Dict:
         """Computes predictions for a given input dataset.
         Args:
           df: Input dataframe
@@ -1322,7 +1328,7 @@ class TemporalFusionTransformer(object):
 
         return {k: format_outputs(process_map[k]) for k in process_map}
 
-    def get_attention(self, df: DataFrame):
+    def get_attention(self, df: DataFrame) -> Dict:
         """Computes TFT attention weights for a given dataset.
     Args:
       df: Input dataframe
@@ -1336,7 +1342,7 @@ class TemporalFusionTransformer(object):
         identifiers = data['identifier']
         time = data['time']
 
-        def get_batch_attention_weights(input_batch):
+        def get_batch_attention_weights(input_batch: ndarray) -> Dict:
             """Returns weights for a given minibatch of data."""
             input_placeholder = self._input_placeholder
             attention_weights = {}
