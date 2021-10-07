@@ -18,7 +18,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
-        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
+        ('date', DataTypes.DATE, InputTypes.TIME),
         ('power_usage', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),

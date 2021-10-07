@@ -17,6 +17,7 @@ from data_formatters.electricity import ElectricityFormatter
 from data_formatters.favorita import FavoritaFormatter
 from data_formatters.traffic import TrafficFormatter
 from data_formatters.volatility import VolatilityFormatter
+from data_formatters.sotavento import SotaventoFormatter
 from expt_settings.configs import ExperimentConfig
 from libs.hyperparam_opt import HyperparamOptManager
 from libs.tft_model import TemporalFusionTransformer
@@ -37,7 +38,7 @@ def main(expt_name: str,
          use_gpu: bool,
          model_folder: str,
          data_csv_path: str,
-         data_formatter: Union[ElectricityFormatter, FavoritaFormatter, TrafficFormatter, VolatilityFormatter],
+         data_formatter: Union[ElectricityFormatter, FavoritaFormatter, TrafficFormatter, VolatilityFormatter, SotaventoFormatter],
          use_testing_mode: bool = False):
     """Trains tft based on defined model params.
   Args:
@@ -78,7 +79,7 @@ def main(expt_name: str,
 
     print("Loading & splitting data...")
     print(data_csv_path)
-    if expt_name != 'erg_wind':
+    if expt_name not in ['erg_wind', 'sotavento']:
         raw_data: DataFrame = pd.read_csv(data_csv_path, index_col=0)
     else:
         raw_data: DataFrame = pd.read_csv(data_csv_path)
@@ -205,7 +206,7 @@ if __name__ == "__main__":
             metavar="e",
             type=str,
             nargs="?",
-            default="electricity",
+            default="sorgenia_wind",
             choices=experiment_names,
             help="Experiment Name. Default={}".format(",".join(experiment_names))
         )
@@ -223,7 +224,7 @@ if __name__ == "__main__":
             type=str,
             nargs="?",
             choices=["yes", "no"],
-            default="no",
+            default="yes",
             help="Whether to use gpu for training."
         )
 
