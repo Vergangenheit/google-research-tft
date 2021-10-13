@@ -56,6 +56,7 @@ class SorgeniaFormatter(GenericDataFormatter):
         self._num_classes_per_cat_input = None
         self.data_folder = data_folder
         self.save_path: str = os.path.join(self.data_folder, "fixed")
+        print(f"saving scalers in {self.save_path}")
         self._time_steps = self.get_fixed_params()['total_time_steps']
 
     def split_data(self, df: DataFrame) -> (DataFrame, DataFrame, DataFrame):
