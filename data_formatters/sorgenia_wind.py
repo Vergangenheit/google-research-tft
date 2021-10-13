@@ -76,7 +76,7 @@ class SorgeniaFormatter(GenericDataFormatter):
         test: DataFrame = df.loc[index >= int(index.max()*0.9)]
 
         self.set_scalers(train)
-
+        self.save_scalers()
         return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df: DataFrame):
